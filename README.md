@@ -29,7 +29,7 @@ Turn on **DebugTiles** under **DebugOptions** to see spawned tiles.
 
 ## Layer
 
-![Image](images/02.png)
+![Image](Images/02.png)
 
 To group together similar objects **MassiveDesigner** uses concept of **Layers**, **Layers** should contain only one type of closely related objects for example trees, grasses and rocks should be placed in separate layers. The type of objects stored in a layer can be set in layer properties.  
 
@@ -48,7 +48,7 @@ You can also copy a **Layer's settings** and paste it on another Layer (using th
 
 ## PaintMesh
 
-![Image](images/03.png)
+![Image](Images/03.png)
 
 A **PaintMesh** is the spawn object, any object you want to spawn via any tool should have this component.  
 To create a new **PaintMesh**, add the **PaintMesh** component to any GameObject you want to spawn.  
@@ -84,7 +84,7 @@ All collision related settings are defined under **PaintMesh > CollisionSettings
 
 ## FoliagePainter
 
-![Image](images/04.png)
+![Image](Images/04.png)
 
 FoliagePainter is manual vegetation painting system of **MassiveDesigner**, it is fast and more useful at painting large objects like trees, however it can still be used to scatter small objects like grasses at a very fast rate if brush size is small.  
 To begin painting a valid unity terrain should exist in scene with a **SpawnTiles** instance covering entire terrain, after everything is setup  
