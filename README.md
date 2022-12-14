@@ -95,6 +95,7 @@ All collision related settings are defined under **PaintMesh > CollisionSettings
 **Debugging a PaintMesh**  
   At most you would want to visualize colliders of a **PaintMesh** for debugging purpose, to debug import any GameObject with **PaintMesh** component into scene and toggle on Debug under **PaintMesh** debug settings.
 
+https://user-images.githubusercontent.com/104358085/207707235-dbd40371-e93c-4fbf-be91-1c0c7d637724.mp4
 
 ## FoliagePainter
 
