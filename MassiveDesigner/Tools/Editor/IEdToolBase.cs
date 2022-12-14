@@ -3,11 +3,18 @@ namespace MassiveDesinger
     namespace Tools
     {
         [System.Serializable]
-        public abstract class EdToolBase
+        public class EdToolBase
         {
-            public abstract void Initialize(MassiveDesigner worldEditor, UnityEditor.SceneView sceneView);
-            public abstract void OnInspectorUpdate();
-            public abstract void OnSceneUpdate();
+            public string Name { get; private set; }
+
+            public EdToolBase(string name)
+            {
+                Name = name;
+            }
+
+            public virtual void Initialize(UnityEditor.SceneView sceneView) { }
+            public virtual void OnInspectorUpdate() { }
+            public virtual void OnSceneUpdate() { }
         }
     }
 }

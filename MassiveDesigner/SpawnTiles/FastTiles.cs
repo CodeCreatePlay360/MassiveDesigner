@@ -5,7 +5,7 @@ using CodeCreatePlay.AutoInspector;
 using DataStructures.ViliWonka.KDTree;
 
 
-namespace CodeCreatePlay
+namespace MassiveDesinger
 {
     namespace FastTiles
     {
@@ -18,7 +18,6 @@ namespace CodeCreatePlay
             // KD tree
             public KDTree kdTree = null;
             public KDQuery kdQuery = null;
-            public List<int> kdQueryResultIndices = null;
             public readonly int Array_Length_Increment = 3;
                
             private bool isDirty = false;
@@ -98,10 +97,14 @@ namespace CodeCreatePlay
                 isDirty = true;
             }
                 
-            public void AddTileData(MassiveDesinger.TileDataObj[] data, bool append=true)
+            public void AddTileData(MassiveDesinger.TileDataObj[] data, bool append=true, bool removeNullData=true)
             {
-                if(append)
+                if(removeNullData)
+                    kdTree.Points = kdTree.Points.Where(item => item != null).ToArray();
+
+                if (append)
                     data = kdTree.Points.Concat(data).ToArray();
+
                 kdTree.SetCount(data.Length);
                 kdTree.Points = data;
                 kdTree.Rebuild();
@@ -117,8 +120,10 @@ namespace CodeCreatePlay
                 kdQuery.Radius(kdTree, atPos, radius, kdQueryResultIndices);
             }
 
-            public void QueryNearestNeighbours(Vector3 atPos, float radius, ref List<MassiveDesinger.TileDataObj> foundData, 
-                bool setQueriedIndexesAsInvalid=false)
+            public void QueryNearestNeighbours(Vector3 atPos, float radius,
+                ref List<int> kdQueryResultIndices,
+                ref List<MassiveDesinger.TileDataObj> foundData,
+                bool setQueriedIndexesAsInvalid = false)
             {
                 if (kdTree.Count == 0)
                     return;
@@ -131,6 +136,45 @@ namespace CodeCreatePlay
                     foundData.Add(kdTree.Points[kdQueryResultIndices[i]]);
                     if (setQueriedIndexesAsInvalid)
                         kdTree.Points[kdQueryResultIndices[i]] = null;
+
+                }
+                isDirty = true;
+            }
+
+            public void QueryNearestNeighbours(Vector3 atPos, float radius, 
+                ref List<int> kdQueryResultIndices,
+                ref List<MassiveDesinger.TileDataObj> foundData,
+                ref List<Vector3> toBeRemovedTreeInstances,
+                bool setQueriedIndexesAsInvalid=false,
+                bool onlyOnSelectedLayer=false,
+                int selectedLayer=-1)
+            {
+                if (kdTree.Count == 0)
+                    return;
+
+                kdQueryResultIndices = new List<int>();
+                kdQuery.Radius(kdTree, atPos, radius, kdQueryResultIndices);
+
+                for (int i = 0; i < kdQueryResultIndices.Count; i++)
+                {
+                    if(onlyOnSelectedLayer)
+                    {
+                        if(kdTree.Points[kdQueryResultIndices[i]].data.layerIdx == selectedLayer)
+                        {
+                            foundData.Add(kdTree.Points[kdQueryResultIndices[i]]);
+                            toBeRemovedTreeInstances.Add(kdTree.Points[kdQueryResultIndices[i]].data.unityTreeInstance.position);
+                            if (setQueriedIndexesAsInvalid)
+                                kdTree.Points[kdQueryResultIndices[i]] = null;
+                        }
+                    }
+                    else
+                    {
+                        foundData.Add(kdTree.Points[kdQueryResultIndices[i]]);
+                        toBeRemovedTreeInstances.Add(kdTree.Points[kdQueryResultIndices[i]].data.unityTreeInstance.position);
+                        if (setQueriedIndexesAsInvalid)
+                            kdTree.Points[kdQueryResultIndices[i]] = null;
+                    }
+
                 }
                 isDirty = true;
             }
@@ -164,8 +208,8 @@ namespace CodeCreatePlay
 
             [EditorFieldAttr(ControlType.boolField, "drawVisibleTiles", layoutHorizontal: -1)]
             public bool drawVisibleTiles = false;
-             
-            public Dictionary<Vector3, Tile> cellDict = null;
+
+            public Dictionary<Vector3, Tile> cellDict = new Dictionary<Vector3, Tile>();
             public bool isOk = false;
 
             // KD tree
@@ -175,18 +219,18 @@ namespace CodeCreatePlay
 
             // privates
             private int nodeRadius = 0;
-            private AutoInspector.AutoInspector autoInspector = null;
+            private AutoInspector autoInspector = null;
 
             // getter / setters
             public int NodeRadius { get { return nodeRadius; } }
-            public AutoInspector.AutoInspector AutoInspector
+            public AutoInspector AutoInspector
             {
                 get
                 {
                     if(autoInspector == null)
                     {
                         System.Object obj = this;
-                        autoInspector = new AutoInspector.AutoInspector(typeof(FastTiles), ref obj);
+                        autoInspector = new AutoInspector(typeof(FastTiles), ref obj);
                     }
                     return autoInspector;
                 }
@@ -205,8 +249,8 @@ namespace CodeCreatePlay
 
                 int gridSize_ = Mathf.Clamp(gridSize, 1000, 8000);
                 int tileSize_ = Mathf.Clamp(tileSize, 500, 1000);
-                gridSize_ = gridSize;
-                tileSize_ = tileSize;
+                gridSize = gridSize_;
+                tileSize = tileSize_;
 
                 int tileCount = 0;
 
@@ -214,14 +258,14 @@ namespace CodeCreatePlay
                 {
                     UnityEngine.Debug.Log("[FastTiles] Unable to create grid...! GridSize must be completly divisible by TileSize");
                     isOk = false;
-                    if(cellDict != null)
-                        cellDict.Clear();
                     return;
                 }
 
+                if (cellDict != null)
+                    cellDict.Clear();
+
                 nodeRadius = tileSize_ / 2;
                 gridSize_ = Mathf.RoundToInt(gridSize / tileSize_); // size of grid in one dimension x or y
-                cellDict = new Dictionary<Vector3, Tile>();
                 MassiveDesinger.TileDataObj[] tileData = new MassiveDesinger.TileDataObj[gridSize_ * gridSize_];
 
                 for (int x = 0; x < gridSize_; x++)
@@ -326,6 +370,11 @@ namespace CodeCreatePlay
                 }
 
                 return foundTiles;
+            }
+
+            public bool IsOK()
+            {
+                return isOk && cellDict != null && cellDict.Count > 0;
             }
         }
     }

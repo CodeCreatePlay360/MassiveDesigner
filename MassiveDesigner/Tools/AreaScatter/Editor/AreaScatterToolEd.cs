@@ -11,11 +11,14 @@ namespace MassiveDesinger
         {
             private MassiveDesigner worldEditor;
             [SerializeField] private bool mainFd = false;
+            AreaScatterTool areaScatterTool;
 
-
-            public override void Initialize(MassiveDesigner _worldEditor, SceneView sceneView)
+            public AreaScatterToolEd(string name):base(name)
             {
-                worldEditor = _worldEditor;
+            }
+
+            public override void Initialize(SceneView sceneView)
+            {
             }
 
             public override void OnInspectorUpdate()
@@ -24,22 +27,22 @@ namespace MassiveDesinger
 
                 if (mainFd)
                 {
-                    worldEditor.areaScatterTool.AutoInspector.Build();
+                    areaScatterTool.AutoInspector.Build();
 
-                    switch (worldEditor.areaScatterTool.settings.areaShape)
+                    switch (areaScatterTool.settings.areaShape)
                     {
                         case AreaShape.Polygon:
                             EditorGUILayout.HelpBox("This feature is available only in patreon version...!", MessageType.Info);
                             return;
                     }
 
-                    if (worldEditor.areaScatterTool.settings.referenceObject == null)
+                    if (areaScatterTool.settings.referenceObject == null)
                     {
                         EditorGUILayout.HelpBox("Reference object not found.", MessageType.Info);
                         return;
                     }
 
-                    if (worldEditor.paintBrush.isPainting)
+                    if (worldEditor.foliagePainter.isPainting)
                     {
                         EditorGUILayout.HelpBox("Another spawner is currently running.", MessageType.Info);
                         return;
@@ -49,15 +52,15 @@ namespace MassiveDesinger
 
                     using (new GUILayout.HorizontalScope())
                     {
-                        if(!worldEditor.areaScatterTool.IsRunning)
+                        if(!areaScatterTool.IsRunning)
                         {
                             Color original = GUI.backgroundColor;
                             GUI.backgroundColor = Color.green;
                             if (GUILayout.Button("BeginScatter"))
-                                worldEditor.areaScatterTool.BeginScatter();
+                                areaScatterTool.BeginScatter();
                             GUI.backgroundColor = original;
                         }
-                        else if(worldEditor.areaScatterTool.IsRunning)
+                        else if(areaScatterTool.IsRunning)
                         {
                             using(new GUILayout.VerticalScope())
                             {
@@ -66,14 +69,14 @@ namespace MassiveDesinger
                                     GUILayout.Space(-2);
                                     GUILayout.Label("[CurrentSpawnCount]", MassiveDesignerEd.boldLabelStyle);
                                     GUILayout.Space(5);
-                                    GUILayout.Label(worldEditor.areaScatterTool.currentSpawnCount.ToString());
+                                    GUILayout.Label(areaScatterTool.currentSpawnCount.ToString());
                                 }
                                  
                                 Color original = GUI.backgroundColor;
                                 GUI.backgroundColor = Color.red;
 
                                 if (GUILayout.Button("Stop"))
-                                    worldEditor.areaScatterTool.IsRunning = false;
+                                    areaScatterTool.IsRunning = false;
 
                                 GUI.backgroundColor = original;
                             }
@@ -84,7 +87,7 @@ namespace MassiveDesinger
                 
             public override void OnSceneUpdate()
             {
-                if(worldEditor.areaScatterTool.settings.referenceObject != null && worldEditor.areaScatterTool.settings.debug)
+                if(areaScatterTool.settings.referenceObject != null && areaScatterTool.settings.debug)
                     return;
             }
         }

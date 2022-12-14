@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using CodeCreatePlay.FastTiles;
+using MassiveDesinger.FastTiles;
 using System.Diagnostics;
 
 
@@ -97,7 +97,7 @@ public class FastTilesDemo : MonoBehaviour
         Tile tile;
         for (int i = 0; i < 500; i++)
         {
-            randPos = CodeCreatePlay.UniformDistributions.GetUniformInParallelogram(gridPoly, grid.gridSize); // generate a random pos on grid
+            randPos = MassiveDesinger.UniformDistributions.GetUniformInParallelogram(gridPoly, grid.gridSize); // generate a random pos on grid
             tileData[i] = new MassiveDesinger.TileDataObj(randPos, tempTileDataObj);
             tile = grid.GetTileAtPos(randPos);
             if (tile != null)
@@ -122,7 +122,7 @@ public class FastTilesDemo : MonoBehaviour
         {
             for (int i = 0; i < spawnCountPerIteration; i++)
             {
-                randPos = CodeCreatePlay.UniformDistributions.GetUniformInParallelogram(gridPoly, 50); // generate a random pos on grid
+                randPos = MassiveDesinger.UniformDistributions.GetUniformInParallelogram(gridPoly, 50); // generate a random pos on grid
                 if(CanSpawn(positions, randPos))
                 {
                     positions[i] = randPos;
@@ -227,7 +227,7 @@ public class FastTilesDemo : MonoBehaviour
         {
             if (tile.kdTree.Count == 0)
                 continue;
-            tile.QueryNearestNeighbours(testObject.transform.position, queryRadius, ref foundData);
+            // tile.QueryNearestNeighbours(testObject.transform.position, queryRadius, ref foundData);
         }
 
         //stopwatch.Stop();

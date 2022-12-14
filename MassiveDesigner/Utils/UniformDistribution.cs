@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
-using CodeCreatePlay.Geometry;
+using MassiveDesinger.Geometry;
 using System.Linq;
 
 
-namespace CodeCreatePlay
+namespace MassiveDesinger
 {
     public class UniformDistribution : MonoBehaviour
     {
@@ -13,28 +13,28 @@ namespace CodeCreatePlay
 
         public void Start()
         {
-            if (!GetComponent<LocationTool.Location>())
-                return;
+            //if (!GetComponent<Tools_Pro.Location>())
+            //    return;
 
-            var loc = GetComponent<LocationTool.Location>();
-            triangles = TriangulatePolygon.TriangulateConcavePolygon(loc.locationBase.Boundaries.ToList());
-            points = UniformDistributions.GetRandUniformInPolygon(triangles, 3000);
+            //var loc = GetComponent<Tools_Pro.Location>();
+            //triangles = TriangulatePolygon.TriangulateConcavePolygon(loc.locationBase.Boundaries.ToList());
+            //points = UniformDistributions.GetRandUniformInPolygon(triangles, 3000);
         }
 
         public void OnDrawGizmos()
         {
-            foreach (var item in triangles)
-            {
-                Gizmos.DrawLine(item.a.position, item.b.position);
-                Gizmos.DrawLine(item.a.position, item.c.position);
-                Gizmos.DrawLine(item.b.position, item.c.position);
-            }
+            //foreach (var item in triangles)
+            //{
+            //    Gizmos.DrawLine(item.a.position, item.b.position);
+            //    Gizmos.DrawLine(item.a.position, item.c.position);
+            //    Gizmos.DrawLine(item.b.position, item.c.position);
+            //}
 
-            foreach (var item in points)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(item, 0.05f);
-            }
+            //foreach (var item in points)
+            //{
+            //    Gizmos.color = Color.red;
+            //    Gizmos.DrawWireSphere(item, 0.05f);
+            //}
         }
     }
 
@@ -301,10 +301,10 @@ namespace CodeCreatePlay
             return GetRandUniformInPolygon(triangles);
         }
 
-        public static List<Vector3> UniformInLocation(LocationTool.Location location)
-        {
-            return location.locationBase.GetUniformPointsDistribution();
-        }
+        //public static List<Vector3> UniformInLocation(Tools_Pro.Location location)
+        //{
+        //    return location.locationBase.GetUniformPointsDistribution();
+        //}
 
         static List<Triangle> GetAllTriangles(GameObject polygon, ref List<Triangle> triangles)
         {

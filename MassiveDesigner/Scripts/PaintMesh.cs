@@ -23,6 +23,9 @@ namespace MassiveDesinger
             [EditorFieldAttr(ControlType.textControl, "specieName")]
             public string specieName = "";
 
+            [EditorFieldAttr(ControlType.boolField, "isActive")]
+            public bool isActive = true;
+
             [EditorFieldAttr(ControlType.boldLabel, "SpecieSettings")]
             [EditorFieldAttr(ControlType.floatField, "spawnProbability")]
             public float spawnProbability = 0.5f;
@@ -40,11 +43,17 @@ namespace MassiveDesinger
             [FloatSliderAttr(ControlType.floatSlider, "secondColliderRadius", 1f, 5f)]
             public float secondColliderRadius = 0.5f;
 
+            [EditorFieldAttr(ControlType.vector3, "firstColliderOffset")]
+            public Vector3 firstColliderOffset = Vector3.zero;
+
             [EditorFieldAttr(ControlType.vector3, "secondColliderOffset")]
             public Vector3 secondColliderOffset = Vector3.zero;
 
+            [EditorFieldAttr(ControlType.boolField, "useFirstColliderOnly")]
+            public bool useFirstColliderOnly = false;
+
             [EditorFieldAttr(ControlType.boldLabel, "Variation")]
-            [FloatSliderAttr(ControlType.floatSlider, "scaleMultiplier", 0.1f, 2f)]
+            [FloatSliderAttr(ControlType.floatSlider, "scaleMultiplier", 0.1f, 10f)]
             public float scaleMultiplier = 1f;
 
             [FloatSliderAttr(ControlType.floatSlider, "scaleVariation", 0.1f, 1f)]
@@ -56,6 +65,24 @@ namespace MassiveDesinger
             [EditorFieldAttr(ControlType.boldLabel, "Debug")]
             [EditorFieldAttr(ControlType.boolField, "debug")]
             public bool debug = false;
+
+            [EditorFieldAttr(ControlType.boolField, "drawFirstCollider", layoutHorizontal:1)]
+            public bool drawFirstCollider = false;
+
+            [EditorFieldAttr(ControlType.boolField, "drawSecondCollider", layoutHorizontal:-1)]
+            public bool drawSecondCollider = false;
+
+
+            public float TreeColliderRadius
+            {
+                get
+                {
+                    if (useFirstColliderOnly)
+                        return firstColliderRadius;
+                    else
+                        return secondColliderRadius;
+                }
+            }
         }
 
         public Properties properties = new ();
@@ -70,11 +97,6 @@ namespace MassiveDesinger
         {
             if (guid == null)
                 guid = Guid.NewGuid().ToString();
-
-            var sphere = UnityEditor.AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/Sphere.fbx", typeof(GameObject)) as GameObject;
-            var halfSphere = UnityEditor.AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/HalfSphere.fbx", typeof(GameObject)) as GameObject;
-            debugMeshSphere = sphere.GetComponent<MeshFilter>().sharedMesh;
-            debugMeshHalfSphere = halfSphere.GetComponent<MeshFilter>().sharedMesh;
         }
 
         public AutoInspector AutoInspector
@@ -110,8 +132,9 @@ namespace MassiveDesinger
          
         Material[] materials;
         Mesh sharedMesh;
-        Mesh debugMeshSphere;
-        Mesh debugMeshHalfSphere;
+        Vector3 _offset;
+        float _radius;
+
 
         public void OnDrawGizmos()
         {
@@ -124,22 +147,30 @@ namespace MassiveDesinger
                     sharedMesh = GetComponent<MeshFilter>().sharedMesh;
                 }
                  
-                float radius = gameObject.transform.localScale.magnitude * properties.firstColliderRadius;
+                _radius = gameObject.transform.localScale.magnitude * properties.firstColliderRadius;
 
-                // draw first collider
-                // *** TODO HALF SPHERE USING , currently it is done using Handles in OnSceneGUI of PaintMeshEd.cs
-                Gizmos.color = new (1f, 0.9f, 0.25f, 0.5f);
-                // Gizmos.DrawWireSphere(transform.position, radius/2);
-                Gizmos.DrawMesh(debugMeshHalfSphere, 0, transform.position, Quaternion.identity, Vector3.one * radius);
+                if(properties.drawFirstCollider)
+                {
+                    // draw first collider
+                    // *** TODO HALF SPHERE USING , currently it is done using Handles in OnSceneGUI of PaintMeshEd.cs
+                    Gizmos.color = new(1f, 0.9f, 0.25f, 0.5f);
+                    // Gizmos.DrawWireSphere(transform.position, radius/2);
+                    _offset = properties.firstColliderOffset * gameObject.transform.localScale.magnitude;
+                    Gizmos.DrawMesh(MassiveDesigner.Instance.DebugMeshHalfSphere, 0, transform.position + _offset, Quaternion.identity, Vector3.one * _radius);
+                }    
 
-                // vis second collider for trees
-                radius = gameObject.transform.localScale.magnitude * properties.secondColliderRadius;
-                var offset = properties.secondColliderOffset * gameObject.transform.localScale.magnitude;
+                if(properties.drawSecondCollider)
+                {
+                    // vis second collider for trees
+                    _radius = gameObject.transform.localScale.magnitude * properties.secondColliderRadius;
+                    _offset = properties.secondColliderOffset * gameObject.transform.localScale.magnitude;
 
-                Gizmos.color = Color.green;
-                Gizmos.DrawWireSphere(transform.position + offset, radius);
-                Gizmos.color = new Color(0, 1, 0, 0.5f);
-                Gizmos.DrawMesh(debugMeshSphere, 0, transform.position + offset, Quaternion.identity, Vector3.one * radius);
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawWireSphere(transform.position + _offset, _radius);
+                    Gizmos.color = new Color(0, 1, 0, 0.5f);
+                    Gizmos.DrawMesh(MassiveDesigner.Instance.DebugMeshSphere, 0, transform.position + _offset, Quaternion.identity, Vector3.one * _radius);
+                }
+
             }
         }
     }

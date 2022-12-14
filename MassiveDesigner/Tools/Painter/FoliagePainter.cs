@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
-using CodeCreatePlay.FastTiles;
-using CodeCreatePlay.Utils;
+using MassiveDesinger.FastTiles;
+using MassiveDesinger.Utils;
 using CodeCreatePlay.AutoInspector;
 
 
@@ -21,12 +21,6 @@ namespace MassiveDesinger
         [System.Serializable]
         public class FoliagePainter : ToolBase
         {
-            public struct SpawnData
-            {
-                public PaintMesh paintMesh;
-                public Vector3 pos;
-            }
-
             /// <summary>
             /// Brush Settings
             /// </summary>
@@ -37,6 +31,9 @@ namespace MassiveDesinger
                 [EditorFieldAttr(ControlType.BrushPaintMode, "paintMode")]
                 public PaintMode paintMode = PaintMode.Normal;
 
+                [EditorFieldAttr(ControlType.layerField, "layerMask")]
+                public LayerMask layerMask;
+
                 [FloatSliderAttr(ControlType.floatSlider, "paintRadius", 0.5f, 500)]
                 public float paintRadius = 50f;
 
@@ -46,6 +43,8 @@ namespace MassiveDesinger
                 [EditorFieldAttr(ControlType.boolField, "useWeightedProbability", layoutHorizontal:-1)]
                 public bool useWeightedProbability = false;
 
+                [EditorFieldAttr(ControlType.boolField, "overrideGroupLayerMask")]
+                public bool overrideGroupLayerMask = true;
 
                 [EditorFieldAttr(ControlType.boldLabel, "RemoveSettings")]
                 public string eraseSettingsLabel = "";
@@ -53,8 +52,8 @@ namespace MassiveDesinger
                 [FloatSliderAttr(ControlType.floatSlider, "removeRadius", 0.5f, 500)]
                 public float removeRadius = 80f;
 
-                [FloatSliderAttr(ControlType.floatSlider, "removeStrength", 0.1f, 1f)]
-                public float removeStrength = 1f;
+                // [FloatSliderAttr(ControlType.floatSlider, "removeStrength", 0.1f, 1f)]
+                // public float removeStrength = 1f;
 
                 [EditorFieldAttr(ControlType.boolField, "removeOnlyOnSelectedLayer")]
                 public bool removeOnlyOnSelectedLayer = true;
@@ -81,8 +80,8 @@ namespace MassiveDesinger
             [SerializeField] private BrushSettings settings = new BrushSettings();
             private Transform brushRefTransform = null;
 
-
             public BrushSettings Settings { get { return settings; } }
+
             public Transform BrushRefTransform
             {
                 get
@@ -119,6 +118,21 @@ namespace MassiveDesinger
             {
             }
 
+            // float gizmoRadius = 0;
+            public override void OnGizmos()
+            {
+                //if (!isPainting)
+                //    return;
+
+                //if (Event.current.shift)
+                //    gizmoRadius = settings.removeRadius;
+                //else
+                //    gizmoRadius = settings.paintRadius;
+
+                //Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.25f);
+                //Gizmos.DrawMesh(MassiveDesigner.Instance.DebugMeshHalfSphere, 0, targetPos, Quaternion.identity, Vector3.one * gizmoRadius);
+            }
+
             public AutoInspector AutoInspector
             {
                 get
@@ -141,6 +155,7 @@ namespace MassiveDesinger
             {
                 MassiveDesigner.Externals.Enable();
                 MassiveDesigner.Instance.UpdateLayersData();
+                MassiveDesigner.Externals.UpdateTerrainPrototypes(MassiveDesigner.Instance.Layers);
             }
 
             Vector3 targetPos = Vector3.zero;
@@ -152,7 +167,7 @@ namespace MassiveDesinger
                     targetPos = hitInfo.point;
                 }
             }
-
+             
             public async void BeginPaint()
             {
                 if (!isPainting)
@@ -160,7 +175,7 @@ namespace MassiveDesinger
                     // Debug.Log("[MassiveDesigner (FoliagePainter)] Begin Paint Operation");
                     isPainting = true;
                     mouseInEditorWin = false;
-                    await Spawn();
+                    await Paint();
                 }
             }
 
@@ -177,7 +192,7 @@ namespace MassiveDesinger
                 }
             }
 
-            public async Task Spawn()
+            public async Task Paint()
             {
                 // ------------------------------
                 // create a unity tree prototype
@@ -212,22 +227,19 @@ namespace MassiveDesinger
                 TileDataObj[] newSpawnedTileDataObjs = new TileDataObj[spawnsPerIteration];
                 Dictionary<Tile, List<TileDataObj>> tileAndData = new Dictionary<Tile, List<TileDataObj>>();
 
-                Dictionary<PaintMesh, float> paintMeshesAndWeights = MassiveDesigner.Instance.PaintMeshesToWeightsMap(settings.useAllLayers,
+                // 
+                PaintMesh[] paintMeshes = MassiveDesigner.Instance.PaintMeshes(settings.useAllLayers,
                     MassiveDesigner.Instance.SelectedLayer.settings.itemsType);
-                Dictionary<int, List<int>> paintMeshesToSplatLayersMap = MassiveDesigner.Instance.PaintMeshesToTextureLayersMap(settings.useAllLayers,
-                    MassiveDesigner.Instance.SelectedLayer.settings.itemsType);
-
-                PaintMesh[] paintMeshes = paintMeshesAndWeights.Keys.ToArray();
-                float[] weights = paintMeshesAndWeights.Values.ToArray();
+                float[] weights = new float[paintMeshes.Length];
+                for (int i = 0; i < paintMeshes.Length; i++)
+                    weights[i] = paintMeshes[i].properties.spawnProbability;
                 int choice;
-                bool useTextureLayers = MassiveDesigner.Instance.SelectedLayer.settings.useTerrainTextureStrength;
-                bool isReplaceMode = false;  // is paint mode set to replace ?
-                bool canSpawn = false;
 
-                var layerMask = 1 << MassiveDesigner.Instance.SelectedLayer.settings.layerMask;
+                //
+                bool canSpawn = false;
+                var layerMask = 1 << (settings.overrideGroupLayerMask ? settings.layerMask : MassiveDesigner.Instance.SelectedLayer.settings.layerMask);
 
                 List<Tile> foundTiles = new List<Tile>();
-                List<int> kdQueryResultIndices = new List<int>();
                 List<Vector3> toBeRemovedTrees = new();
                 int count = 0;
 
@@ -235,6 +247,8 @@ namespace MassiveDesinger
                 {
                     if (mouseInEditorWin)
                     {
+                        MassiveDesigner.Instance.treeInstances.Clear();
+
                         newSpawnedTileDataObjs = new TileDataObj[spawnsPerIteration];
                         foundTiles.Clear();
                         toBeRemovedTrees.Clear();
@@ -262,7 +276,6 @@ namespace MassiveDesinger
                                     paintMesh = paintMeshes[choice];
                                 }
 
-                                // paintMesh = worldEditor.SelectedLayer.GetPaintMesh();
                                 scaleVariation = UnityEngine.Random.Range(0.01f, paintMesh.properties.scaleVariation);
                                 randScale = new()
                                 {
@@ -270,42 +283,40 @@ namespace MassiveDesinger
                                     y = (paintMesh.transform.localScale.y * paintMesh.properties.scaleMultiplier) * (1f - scaleVariation),
                                     z = (paintMesh.transform.localScale.z * paintMesh.properties.scaleMultiplier) * (1f - scaleVariation),
                                 };
-                                randScale = Vector3.one;
+                                // randScale = Vector3.one;
                                 randRot = Quaternion.identity;
 
-                                isReplaceMode = settings.paintMode == PaintMode.Replace;
-                                if (isReplaceMode)
+                                // check if can spawn on this terrain texture
+                                if (MassiveDesigner.Instance.Layers[paintMesh.layerIdx].settings.useTerrainTextureStrength)
                                 {
-                                    canSpawn = MassiveDesigner.Instance.CanSpawn(raycastHit.point, paintMesh, randScale, newSpawnedTileDataObjs);
+                                    if (!MassiveDesigner.Instance.CanSpawnOnTex(raycastHit.point, MassiveDesigner.Instance.Layers[paintMesh.layerIdx].splatLayers))
+                                        continue;
                                 }
-                                else
-                                {
-                                    canSpawn = MassiveDesigner.Instance.CanSpawn(raycastHit.point, paintMesh, randScale) &&
-                                        MassiveDesigner.Instance.CanSpawn(raycastHit.point, paintMesh, randScale, newSpawnedTileDataObjs);
-                                }
+
+                                canSpawn = MassiveDesigner.Instance.CanSpawn(raycastHit.point, paintMesh, randScale,
+                                    removeLowerPriorityObjs:settings.paintMode == PaintMode.Replace) &&
+                                    MassiveDesigner.Instance.CanSpawn(raycastHit.point, paintMesh, randScale, ref newSpawnedTileDataObjs,
+                                    removeLowerPriorityObjs: settings.paintMode == PaintMode.Replace);
 
                                 if (canSpawn)
                                 {
-                                    if (useTextureLayers && !MassiveDesigner.Instance.CheckTerrainTextureSpawnProbability(raycastHit.point,
-                                        paintMeshesToSplatLayersMap[choice]))
-                                        continue;
-
-                                    // Unity terrain tree spawn
+                                    // -------------------------------------------------------------------------------------------------------------
+                                    // UNITY TERRAIN TREE
                                     unityTreePos = new()
                                     {
                                         x = CommonMaths.ConvertToRange(0f, MassiveDesigner.Externals.terrainData.size.x, 0f, 1f, raycastHit.point.x),
                                         y = CommonMaths.ConvertToRange(0f, MassiveDesigner.Externals.terrainData.size.y, 0f, 1f, raycastHit.point.y),
                                         z = CommonMaths.ConvertToRange(0f, MassiveDesigner.Externals.terrainData.size.z, 0f, 1f, raycastHit.point.z)
                                     };
-
                                     treeInstance.prototypeIndex = paintMesh.terrainItemIdx;
                                     treeInstance.widthScale = randScale.x;
                                     treeInstance.heightScale = randScale.z;
-                                    treeInstance.rotation = 0.5f * Mathf.Deg2Rad;
+                                    treeInstance.rotation = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
                                     treeInstance.position = unityTreePos;
                                     newTrees.Add(treeInstance);
+                                    // -------------------------------------------------------------------------------------------------------------
 
-                                    tempTileData = new TileData(paintMesh, raycastHit.point, randRot, randScale, treeInstance, MassiveDesigner.Instance.SelectedLayer.layerIndex);
+                                    tempTileData = new TileData(paintMesh, raycastHit.point, randRot, randScale, treeInstance, paintMesh.layerIdx, paintMesh.layerPriorityIdx);
                                     tempTileDataObj = new TileDataObj(raycastHit.point, tempTileData);
                                     newSpawnedTileDataObjs[i] = tempTileDataObj;
 
@@ -313,59 +324,21 @@ namespace MassiveDesinger
                                     if (!tileAndData.ContainsKey(tileAtPos))
                                         tileAndData[tileAtPos] = new List<TileDataObj>();
                                     tileAndData[tileAtPos].Add(tempTileDataObj);
-
-                                    // ------------------------------------------------------------------------------------------------ //
-                                    if (isReplaceMode)
-                                    {
-                                        // check collisions aginst this spawned object and set them to null
-                                        List<Tile> tiles = MassiveDesigner.Instance.spawnTiles.TilesInRadius(raycastHit.point, 3.5f);
-                                        foreach (var item in tiles)
-                                            if (!foundTiles.Contains(item))
-                                                foundTiles.Add(item);
-
-                                        for (int j = 0; j < tiles.Count; j++)
-                                        {
-                                            if (tiles[j].kdTree.Points.Length > 0)
-                                            {
-                                                tiles[j].QueryNearestNeighbours(raycastHit.point, 3.5f, ref kdQueryResultIndices);
-                                                for (int k = 0; k < kdQueryResultIndices.Count; k++)
-                                                {
-                                                    tempTileDataObj = tiles[j].kdTree.Points[kdQueryResultIndices[k]];
-                                                    if (MassiveDesigner.Instance.SelectedLayer.layerIndex == tempTileDataObj.data.layerIdx)
-                                                    {
-                                                        toBeRemovedTrees.Add(tempTileDataObj.data.unityTreePos);
-                                                        tiles[j].kdTree.Points[kdQueryResultIndices[k]] = null;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    // ------------------------------------------------------------------------------------------------ //
                                 }
                             }
                         }
 
                         if (mouseInEditorWin)
                         {
-                            if (isReplaceMode)
+                            if(settings.paintMode == PaintMode.Replace)
                             {
-                                foreach (var item in foundTiles)
-                                {
-                                    item.RemoveNullData();
-                                }
-
-                                newTrees = newTrees.Where(c => !toBeRemovedTrees.Contains(c.position)).ToList();
+                                newTrees = newTrees.Where(c => !MassiveDesigner.Instance.treeInstances.Contains(c.position)).ToList();
                             }
-
-                            //foreach (var item in tileAndData.Keys)
-                            //    count += tileAndData[item].Count;
-
-                            //Debug.LogFormat("Total points spawned: {0}", count);
-                            //Debug.LogFormat("Total trees spawned: {0}", newTrees.Count);
 
                             MassiveDesigner.Instance.AddData(tileAndData);
                             MassiveDesigner.Externals.terrainData.SetTreeInstances(newTrees.ToArray(), snapToHeightmap: false);
                             newTrees = MassiveDesigner.Externals.terrainData.treeInstances.ToList();
+                            MassiveDesigner.Instance.IsDirty = true;
                         }
                     }
                      
@@ -374,54 +347,50 @@ namespace MassiveDesinger
                 // Debug.Log("End spawn");
             }
 
-            public SpawnData[] GeneratePaintMeshes()
-            {
-                SpawnData[] spawnData = new SpawnData[100];
-
-                for (int i = 0; i < 100; i++)
-                {
-                    // generate a random point
-
-
-                    // get a paint mesh
-
-
-                    // wrap into SpawnDataObject
-
-
-                    // add to array
-
-                }
-
-                return spawnData;
-            }
-
             public void ClearPaint(Ray ray)
             {
                 TreeInstance[] existingTrees = MassiveDesigner.Externals.terrainData.treeInstances;
                 List<Vector3> toBeRemovedTrees = new();
 
+                List<int> queriedIndexes = null;
                 List<TileDataObj> foundData = new List<TileDataObj>();
                 List<Tile> foundTiles;
                 TileDataObj tileData;
 
-                var layerMask = 1 << MassiveDesigner.Instance.SelectedLayer.settings.layerMask;
+                // var layerMask = 1 << MassiveDesigner.Instance.SelectedLayer.settings.layerMask;
 
-                if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hitInfo, Mathf.Infinity, layerMask))
+                if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hitInfo, Mathf.Infinity))
                 {
                     foundTiles = MassiveDesigner.Instance.spawnTiles.TilesInRadius(hitInfo.point, settings.removeRadius);
-
+                     
                     for (int i = 0; i < foundTiles.Count; i++)
                     {
                         foundData.Clear();
-                        foundTiles[i].QueryNearestNeighbours(hitInfo.point, settings.removeRadius, ref foundData, true);
+                        foundTiles[i].QueryNearestNeighbours(
+                            hitInfo.point,
+                            settings.removeRadius,
+                            ref queriedIndexes,
+                            ref foundData,
+                            ref toBeRemovedTrees,
+                            true, onlyOnSelectedLayer:settings.removeOnlyOnSelectedLayer, 
+                            selectedLayer:MassiveDesigner.Instance.SelectedLayerIdx);
 
-                        for (int j = 0; j < foundData.Count; j++)
-                        {
-                            tileData = foundData[j];
-                            toBeRemovedTrees.Add(tileData.data.unityTreePos);
-                        }
+                        //for (int j = 0; j < foundData.Count; j++)
+                        //{
+                        //    tileData = foundData[j];
 
+                        //    if (settings.removeOnlyOnSelectedLayer)
+                        //    {
+                        //        if(tileData.data.layerIdx == MassiveDesigner.Instance.SelectedLayerIdx)
+                        //            toBeRemovedTrees.Add(tileData.data.unityTreeInstance.position);
+                        //    }
+                        //    else
+                        //    {
+                        //        toBeRemovedTrees.Add(tileData.data.unityTreeInstance.position);
+                        //    }
+                        //}
+
+                        // this works because all queried items are set to null in QueryNearestNeighbours
                         foundTiles[i].RemoveNullData();
                     }
 

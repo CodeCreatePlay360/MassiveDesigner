@@ -12,16 +12,18 @@ namespace MassiveDesinger
         public Vector3 scale;
         public Quaternion rot;
 
-        public Vector3 unityTreePos;
+        public TreeInstance unityTreeInstance;
 
-        public int layerIdx = -1;
+        public int layerIdx = 0;
+        public int priorityIdx = 0;
 
         public Matrix4x4 Matrix
         {
             get { return Matrix4x4.TRS(pos, rot, scale); }
         }
 
-        public TileData(PaintMesh paintMesh, Vector3 pos, Quaternion rot, Vector3 scale, TreeInstance treeInstance, int layerIdx)
+
+        public TileData(PaintMesh paintMesh, Vector3 pos, Quaternion rot, Vector3 scale, TreeInstance treeInstance, int layerIdx, int priorityIdx)
         {
             this.paintMesh = paintMesh;
 
@@ -29,22 +31,10 @@ namespace MassiveDesinger
             this.rot = rot;
             this.scale = scale;
 
-            unityTreePos = treeInstance.position;
+            unityTreeInstance = treeInstance;
 
             this.layerIdx = layerIdx;
-        }
-
-        public TileData(PaintMesh paintMesh, Vector3 pos, Quaternion rot, Vector3 scale, Vector3 unityTreePos, int layerIdx)
-        {
-            this.paintMesh = paintMesh;
-
-            this.pos = pos;
-            this.rot = rot;
-            this.scale = scale;
-
-            this.unityTreePos = unityTreePos;
-
-            this.layerIdx = layerIdx;
+            this.priorityIdx = priorityIdx;
         }
     }
 

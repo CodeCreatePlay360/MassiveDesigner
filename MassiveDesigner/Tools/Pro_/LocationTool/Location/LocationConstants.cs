@@ -1,10 +1,7 @@
-﻿using UnityEngine;
+﻿
 
-
-namespace CodeCreatePlay
+namespace MassiveDesinger
 {
-    namespace LocationTool
-    {
         [System.Serializable]
         public enum LocationCategory
         {
@@ -29,5 +26,4 @@ namespace CodeCreatePlay
             LampPost,
             Torch,
         }
-    }
 }

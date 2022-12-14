@@ -2,7 +2,7 @@
 using UnityEngine;
 
 
-namespace CodeCreatePlay
+namespace MassiveDesinger
 {
     public abstract class Action
     {

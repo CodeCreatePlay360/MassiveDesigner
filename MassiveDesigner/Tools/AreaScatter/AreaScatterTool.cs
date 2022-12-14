@@ -1,11 +1,5 @@
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using CodeCreatePlay.AutoInspector;
 using UnityEngine;
-using CodeCreatePlay.LocationTool;
-using System.Linq;
-using CodeCreatePlay.Utils;
 
 
 namespace MassiveDesinger
@@ -24,7 +18,6 @@ namespace MassiveDesinger
             [System.Serializable]
             public class Settings
             {
-                [EditorFieldAttr(ControlType.AreaShape, "areaShape")]
                 public AreaShape areaShape = AreaShape.Parallelogram;
 
                 [EditorFieldAttr(ControlType.boldLabel, "ParallelogramSettings")]

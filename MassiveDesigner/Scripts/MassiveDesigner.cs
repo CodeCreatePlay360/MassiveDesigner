@@ -2,8 +2,8 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using CodeCreatePlay.AutoInspector;
-using CodeCreatePlay.FastTiles;
-using CodeCreatePlay.Utils;
+using MassiveDesinger.FastTiles;
+using MassiveDesinger.Utils;
 
 
 namespace MassiveDesinger
@@ -76,8 +76,8 @@ namespace MassiveDesinger
                 if (materials.Length == 0)
                     return false;
 
-                if (itemType == PaintMesh.ItemType.Trees && materials.Length > 2)
-                { Debug.LogErrorFormat("[MassiveDesigner] Trees can contain only 2 materials per object {0}.", prototype); return false; }
+                if (itemType == PaintMesh.ItemType.Trees && materials.Length > 3)
+                { Debug.LogErrorFormat("[MassiveDesigner] Tree {0} has more then 2 materials this might reduce performance", prototype); return false; }
 
                 if (itemType == PaintMesh.ItemType.GrassAndGroundCover && materials.Length > 1)
                 { Debug.LogErrorFormat("[MassiveDesigner] GrassAndGroundCover objects can contain only 1 materials per object {0}.", prototype); return false; }
@@ -134,11 +134,10 @@ namespace MassiveDesinger
                 int detailObjIdx = 0;
                 for (int i = 0; i < paintMeshes.Count; i++)
                 {
-                    paintMeshes[i].terrainItemIdx = i;
-
                     if (paintMeshes[i].properties.itemType == PaintMesh.ItemType.Trees)
                     {
                         treePrototypes[treeObjIdx] = new TreePrototype { prefab = paintMeshes[i].gameObject };
+                        paintMeshes[i].terrainItemIdx = treeObjIdx;
                         treeObjIdx++;
                     }
 
@@ -150,8 +149,15 @@ namespace MassiveDesinger
                             useInstancing = true,
                             usePrototypeMesh = true,
                             prototype = paintMeshes[i].gameObject,
-                            renderMode = DetailRenderMode.VertexLit
+                            renderMode = DetailRenderMode.VertexLit,
+
+                            minHeight = paintMeshes[i].properties.scaleMultiplier,
+                            maxHeight = paintMeshes[i].properties.scaleMultiplier,
+
+                            minWidth = paintMeshes[i].properties.scaleMultiplier,
+                            maxWidth = paintMeshes[i].properties.scaleMultiplier,
                         };
+                        paintMeshes[i].terrainItemIdx = detailObjIdx;
                         detailObjIdx++;
                     }
                 }
@@ -193,34 +199,62 @@ namespace MassiveDesinger
         }
 
 
-        public static class Colors
-        {
-            public static Color RED = new (1f, 0.1f, 0.1f, 1f);
-            public static Color ORANGE = new (1f, 0.8f, 0.4f, 1f);
-            public static Color GREEN = new(0.1f, 1f, 0.1f, 1f);
-        }
-
-
         // public
+        // tools
         public Externals externals = new();
-        public Tools.FoliagePainter paintBrush = new();
-        public Tools.GrassPainter grassPainter = new();
-        public Tools.AreaScatterTool areaScatterTool = new();
-        public SaveDataFile saveFile = null;
+        public Tools.FoliagePainter foliagePainter = new();
+        public Tools_Pro.GrassPainter grassPainter = new();
+        public Tools_Pro.LocationTool locationTool = new();
 
+        // 
+        public SaveDataFile saveFile = null;
+        public Layer.Settings layerCopiedSettings = null;
 
         // private
         [SerializeField] private List<Layer> layers = new();
         [SerializeField] private int selectedLayerIdx = 0;
-
-        public FastTiles spawnTiles = new FastTiles();
         [SerializeField] public bool tilesOK = false;
+        public FastTiles.FastTiles spawnTiles = new FastTiles.FastTiles();
 
-         
+        // editor
+        public int currentTabIndex = 0; // geo paint editor = 0, spline editor = 1
+
+
+        Mesh _debugMeshSphere;
+        Mesh _debugMeshHalfSphere;
+
+        public Mesh DebugMeshSphere
+        {
+            get
+            {
+                if (_debugMeshSphere == null)
+                {
+                    var sphere = UnityEditor.AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/Sphere.fbx", typeof(GameObject)) as GameObject;
+                    _debugMeshSphere = sphere.GetComponent<MeshFilter>().sharedMesh;
+                }
+                return _debugMeshSphere;
+            }
+        }
+
+        public Mesh DebugMeshHalfSphere
+        {
+            get
+            {
+                if (_debugMeshHalfSphere == null)
+                {
+                    var halfSphere = UnityEditor.AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/HalfSphere.fbx", typeof(GameObject)) as GameObject;
+                    _debugMeshHalfSphere = halfSphere.GetComponent<MeshFilter>().sharedMesh;
+                }
+                return _debugMeshHalfSphere;
+            }
+        }
+
+
         // getter / setters
         public List<Layer> Layers { get { return layers; } }
 
         public bool IsDirty { get; set; } = false;
+
         public bool IsSerialized { get; set; } = false;
 
         public int SelectedLayerIdx { get { return selectedLayerIdx; } }
@@ -235,18 +269,17 @@ namespace MassiveDesinger
                 }
                 else if (layers.Count > 0)
                 {
-                    return layers[0];
+                    return layers[selectedLayerIdx];
                 }
      
                 return null;
             }
         }
 
-        // static
-        public static Layer.Settings layerCopiedSettings = null;
+        // statics
         public static MassiveDesigner Instance = null;
-        public static bool PRO_VERSION = true;
         public static readonly int INVALID_INDEX = -1;
+        public static readonly string VERSION = "v0.1";
 
         public static Vector3 RandScale(float scaleVar, Vector3 currentScale)
         {
@@ -280,6 +313,11 @@ namespace MassiveDesinger
             Enable();
         }
 
+        public void OnDrawGizmos()
+        {
+            foliagePainter.OnGizmos();
+        }
+
         public void Enable()
         {
             Instance = this;
@@ -290,13 +328,13 @@ namespace MassiveDesinger
 
             if (SelectedLayer != null)
                 SelectedLayer.OnEnable();
-              
-            // initialize tools
-            paintBrush.Initialize();
-            grassPainter.Initialize();
-            areaScatterTool.Initialize();
-            // [TODO] LocationTool should be init here
 
+            // tools
+            foliagePainter.Initialize();
+            grassPainter.Initialize();
+            locationTool.Initialize();
+
+            //
             UpdateLayersData();
 
             // others
@@ -316,7 +354,7 @@ namespace MassiveDesinger
             {
                 layers[i].layerIndex = i;
                 layers[i].SortPaintMeshes();
-                layers[i].UpdatePaintMeshes();
+                layers[i].UpdatePaintMeshes(layers[i].settings.priorityIdx);
                 layers[i].GetSplatLayers();
             }
 
@@ -343,7 +381,7 @@ namespace MassiveDesinger
             if (idx == 0)
                 return;
 
-            RemoveAllItemsOnLayer(layers[idx]);
+            RemoveAllItems(onLayer:true, layerIdx:layers[idx].layerIndex);
 
             layers.RemoveAt(idx);
 
@@ -357,7 +395,7 @@ namespace MassiveDesinger
             SelectedLayer.OnSelect();
         }
 
-        public void RemoveAllItemsOnLayer(Layer layer)
+        public void RemoveAllItems(bool onLayer = false, int layerIdx=-1, PaintMesh paintMesh=null)
         {
             // collect all tree instances to be removed
             List<Vector2> toBeRemoved = new();
@@ -369,11 +407,23 @@ namespace MassiveDesinger
                 {
                     tile = spawnTiles.cellDict[key];
 
-                    if (tile.kdTree.Points[i].data.layerIdx == layer.layerIndex)
+                    if(onLayer)
                     {
-                        toBeRemoved.Add(new Vector2(tile.kdTree.Points[i].pos.x, tile.kdTree.Points[i].pos.z));
-                        tile.kdTree.Points[i] = null;
+                        if (tile.kdTree.Points[i].data.layerIdx == layerIdx)
+                        {
+                            toBeRemoved.Add(new Vector2(tile.kdTree.Points[i].pos.x, tile.kdTree.Points[i].pos.z));
+                            tile.kdTree.Points[i] = null;
+                        }
                     }
+                    else
+                    {
+                        if (tile.kdTree.Points[i].data.paintMesh == paintMesh)
+                        {
+                            toBeRemoved.Add(new Vector2(tile.kdTree.Points[i].pos.x, tile.kdTree.Points[i].pos.z));
+                            tile.kdTree.Points[i] = null;
+                        }
+                    }
+
                 }
             }
 
@@ -387,10 +437,10 @@ namespace MassiveDesinger
             }
         }
 
-        public void AddInstancedMesh(PaintMesh paintMesh, Vector3 pos, Vector3 scale, Quaternion rot, TreeInstance treeInstance, int layerIdx)
+        public void AddInstancedMesh(PaintMesh paintMesh, Vector3 pos, Vector3 scale, Quaternion rot, TreeInstance treeInstance, int layerIdx, int priorityIdx)
         {
             var foundTiles = spawnTiles.GetTileAtPos(pos);
-            TileData data = new TileData(paintMesh, pos, rot, scale, treeInstance, layerIdx);
+            TileData data = new TileData(paintMesh, pos, rot, scale, treeInstance, layerIdx, priorityIdx);
             foundTiles.AddCellData(new TileDataObj(pos, data));
         }
 
@@ -409,9 +459,14 @@ namespace MassiveDesinger
         List<Tile> foundTiles;
         List<TileDataObj> foundData = new List<TileDataObj>();
         TileDataObj tileData;
+        bool canSpawn = false;
+        public List<int> queriedIndexes = null;
+        public List<Vector3> treeInstances = new List<Vector3>();
 
-        public bool CanSpawn(Vector3 atPos, PaintMesh paintMesh, Vector3 scale)
+        public bool CanSpawn(Vector3 atPos, PaintMesh paintMesh, Vector3 scale, bool removeLowerPriorityObjs = false)
         {
+            canSpawn = true;
+
             radius = paintMesh.properties.itemType == PaintMesh.ItemType.GrassAndGroundCover ? paintMesh.properties.firstColliderRadius : 
                 paintMesh.properties.secondColliderRadius;
             radius *= 10f;
@@ -420,23 +475,32 @@ namespace MassiveDesinger
             for (int i = 0; i < foundTiles.Count; i++)
             {
                 foundData.Clear();
-                foundTiles[i].QueryNearestNeighbours(atPos, radius, ref foundData);
+                foundTiles[i].QueryNearestNeighbours(atPos, radius, ref queriedIndexes,  ref foundData);
 
                 for (int j = 0; j < foundData.Count; j++)
                 {
                     tileData = foundData[j];
                     if (Collision(paintMesh, scale, atPos, tileData))
                     {
-                        return false;
+                        canSpawn = false;
+
+                        // save the collision 
+                        if (removeLowerPriorityObjs && paintMesh.layerPriorityIdx > Layers[tileData.data.layerIdx].settings.priorityIdx)
+                        {
+                            treeInstances.Add(tileData.data.unityTreeInstance.position);
+                            foundTiles[i].kdTree.Points[queriedIndexes[j]] = null;
+                        }
                     }
                 }
             }
 
-            return true;
+            return canSpawn;
         }
 
-        public bool CanSpawn(Vector3 atPos, PaintMesh paintMesh, Vector3 scale, TileDataObj[] fromData)
+        public bool CanSpawn(Vector3 atPos, PaintMesh paintMesh, Vector3 scale, ref TileDataObj[] fromData, bool removeLowerPriorityObjs=false)
         {
+            canSpawn = true;
+
             for (int i = 0; i < fromData.Length; i++)
             {
                 tileData = fromData[i];
@@ -444,44 +508,111 @@ namespace MassiveDesinger
                 {
                     if (Collision(paintMesh, scale, atPos, tileData))
                     {
-                        return false;
+                        canSpawn = false;
+
+                        // save the collision 
+                        if (removeLowerPriorityObjs && paintMesh.layerPriorityIdx > Layers[tileData.data.layerIdx].settings.priorityIdx)
+                        {
+                            treeInstances.Add(tileData.data.unityTreeInstance.position);
+                            fromData[i] = null;
+                        }
                     }
                 }
             }
 
-            return true;
+            return canSpawn;
         }
 
         public bool Collision(PaintMesh paintMesh, Vector3 scale, Vector3 atPos, TileDataObj tileData)
         {
-            if (paintMesh.properties.itemType == PaintMesh.ItemType.Trees && tileData.data.paintMesh.properties.itemType == PaintMesh.ItemType.Trees)
-            {
-                r1 = (scale.magnitude * paintMesh.properties.secondColliderRadius);
-                pos_1 = atPos + paintMesh.properties.secondColliderOffset;
+            // ** 1st collider to 1st collider collision
+            // position and collision radius of 1st PaintMesh
+            r1 = (scale.magnitude * paintMesh.properties.firstColliderRadius);
+            pos_1 = atPos + paintMesh.properties.firstColliderOffset;
 
-                r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.secondColliderRadius);
-                pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.secondColliderOffset;
+            // position and collision radius of 2nd PaintMesh
+            r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.firstColliderRadius);
+            pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.firstColliderOffset;
 
-                if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
-                    return true;
-            }   
-            else
-            {
-                // all other meshes use first colliders 
-                r1 = paintMesh.properties.firstColliderRadius * scale.magnitude;
-                pos_1 = atPos;
+            if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
+                return true;
 
-                r2 = tileData.data.paintMesh.properties.firstColliderRadius * tileData.data.scale.magnitude;
-                pos_2 = tileData.pos;
 
-                if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
-                    return true;
-            }
+            // if any one of PaintMeshes in using only one collider then return
+            if (paintMesh.properties.useFirstColliderOnly || tileData.data.paintMesh.properties.useFirstColliderOnly)
+                return false;
+
+            // ------------------------------------------------------------------------------ //
+
+            // ** 2nd collider to 2nd collider collision
+            // position and collision radius of 2nd PaintMesh
+            r1 = (scale.magnitude * paintMesh.properties.secondColliderRadius);
+            pos_1 = atPos + paintMesh.properties.secondColliderOffset;
+
+            // position and collision radius of 2nd PaintMesh
+            r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.secondColliderRadius);
+            pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.secondColliderOffset;
+
+            if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
+                return true;
+
+            // ------------------------------------------------------------------------------ //
+
+            // ** 1st collider to 2nd collider collision
+            // position and collision radius of 1st PaintMesh
+            r1 = (scale.magnitude * paintMesh.properties.firstColliderRadius);
+            pos_1 = atPos + paintMesh.properties.firstColliderOffset;
+
+            // position and collision radius of 2nd PaintMesh
+            r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.secondColliderRadius);
+            pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.secondColliderOffset;
+
+            if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
+                return true;
 
             return false;
         }
 
-        public bool CheckTerrainTextureSpawnProbability(Vector3 point, List<int> textureLayers)
+        public bool _Collision(PaintMesh paintMesh, Vector3 scale, Vector3 atPos, TileDataObj tileData)
+        {
+            //if (paintMesh.properties.itemType == PaintMesh.ItemType.Trees && tileData.data.paintMesh.properties.itemType == PaintMesh.ItemType.Trees)
+            //{
+            //    // first collider radius and position
+            //    r1 = (scale.magnitude * paintMesh.properties.TreeColliderRadius);
+            //    //
+            //    if (paintMesh.properties.useFirstColliderOnly)
+            //        pos_1 = atPos;
+            //    else
+            //        pos_1 = atPos + paintMesh.properties.secondColliderOffset;
+
+            //    // second collider radius and position
+            //    r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.TreeColliderRadius);
+            //    //
+            //    if (paintMesh.properties.useFirstColliderOnly)
+            //        pos_2 = tileData.pos;
+            //    else
+            //        pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.secondColliderOffset;
+
+            //    if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
+            //        return true;
+            //}   
+            //else
+            //{
+            //    // all other meshes use first colliders 
+            //    r1 = paintMesh.properties.firstColliderRadius * scale.magnitude;
+            //    pos_1 = atPos + paintMesh.properties.firstColliderOffset;
+
+            //    r2 = tileData.data.paintMesh.properties.firstColliderRadius * tileData.data.scale.magnitude;
+            //    pos_2 = tileData.data.paintMesh.properties.firstColliderOffset;
+
+            //    if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
+            //        return true;
+            //}
+
+            return false;
+        }
+
+        public bool CanSpawnOnTex(Vector3 point, List<int> textureLayers)
         {
             bool CanSpawn(int splatLayer)
             {
@@ -499,72 +630,34 @@ namespace MassiveDesinger
             return false;
         }
 
-        public Dictionary<PaintMesh, float> PaintMeshesToWeightsMap(bool selectedLayerOnly, PaintMesh.ItemType itemsType)
+        public PaintMesh[] PaintMeshes(bool fromAllLayers, PaintMesh.ItemType itemsType)
         {
-            // var currentTerrainData = Externals.terrainData;
-            Dictionary<PaintMesh, float> paintMeshAndWeight = new Dictionary<PaintMesh, float>();
+            List<PaintMesh> paintMeshes = new List<PaintMesh>();
 
-            if (selectedLayerOnly)
+            if(fromAllLayers)
             {
-                if(SelectedLayer.settings.itemsType == itemsType)
+                for (int i = 0; i < Layers.Count; i++)
                 {
-                    for (int i = 0; i < SelectedLayer.paintMeshes.Count - 1; i++)
+                    if(Layers[i].settings.itemsType == itemsType)
                     {
-                        paintMeshAndWeight[SelectedLayer.paintMeshes[i]] = layers[i].paintMeshes[i].properties.spawnProbability;
+                        for (int j = 0; j < Layers[i].paintMeshes.Count; j++)
+                        {
+                            if (Layers[i].paintMeshes[j] != null && Layers[i].paintMeshes[j].properties.isActive)
+                                paintMeshes.Add(Layers[i].paintMeshes[j]);
+                        }
                     }
                 }
             }
             else
             {
-                int paintMeshIdx = 0;
-                for (int i = 0; i < Layers.Count; i++)
+                for (int i = 0; i < SelectedLayer.paintMeshes.Count; i++)
                 {
-                    if (Layers[i].settings.itemsType == itemsType)
-                    {
-                        for (int j = 0; j < Layers[i].paintMeshes.Count - 1; j++)
-                        {
-                            // spawnProbability = layers[i].settings.weightedSelection ? layers[i].paintMeshes[paintMeshIdx].properties.spawnProbability : 0f;
-                            paintMeshAndWeight[layers[i].paintMeshes[paintMeshIdx]] = layers[i].paintMeshes[paintMeshIdx].properties.spawnProbability;
-                            paintMeshIdx++;
-                        }
-                    }
+                    if (SelectedLayer.settings.itemsType == itemsType && SelectedLayer.paintMeshes[i] != null && SelectedLayer.paintMeshes[i].properties.isActive)
+                        paintMeshes.Add(SelectedLayer.paintMeshes[i]);
                 }
             }
 
-            return paintMeshAndWeight;
-        }
-
-        public Dictionary<int, List<int>> PaintMeshesToTextureLayersMap(bool selectedLayerOnly, PaintMesh.ItemType itemsType)
-        {
-            Dictionary<int, List<int>> paintMeshToTextureMaps = new Dictionary<int, List<int>>();
-
-            if (selectedLayerOnly)
-            {
-                if (SelectedLayer.settings.itemsType == itemsType)
-                {
-                    for (int i = 0; i < SelectedLayer.paintMeshes.Count - 1; i++)
-                    {
-                        paintMeshToTextureMaps[i] = layers[i].splatLayers;
-                    }
-                }
-            }
-            else
-            {
-                int paintMeshIdx = 0;
-                for (int i = 0; i < Layers.Count; i++)
-                {
-                    if (Layers[i].settings.itemsType == itemsType)
-                    {
-                        for (int j = 0; j < Layers[i].paintMeshes.Count - 1; j++)
-                        {
-                            paintMeshToTextureMaps[i] = layers[i].splatLayers;
-                            paintMeshIdx++;
-                        }
-                    }
-                }
-            }
-
-            return paintMeshToTextureMaps;
+            return paintMeshes.ToArray();
         }
 
         public void MarkDirty()
@@ -572,49 +665,49 @@ namespace MassiveDesinger
             IsDirty = true;
         }
 
+
+        /// <summary>
+        /// Clears all data from MassiveDesignerSpawnTiles
+        /// </summary>
         public void ClearAll()
         {
+            ClearUnityTerrainDetails();
+
             TreeInstance[] treeInstances = new TreeInstance[0];
             Externals.terrainData.SetTreeInstances(treeInstances, snapToHeightmap: true);
             InitTiles();
         }
 
-        #region Serialization
-        [SerializeField] public List<Tile> savedTiles = null;
+        public void ClearUnityTerrainDetails()
+        {
+            var currentTerrainData = MassiveDesigner.Externals.terrainData;
+            int[,] emptyMap = new int[currentTerrainData.detailWidth, currentTerrainData.detailHeight];
+            for (int i = 0; i < currentTerrainData.detailPrototypes.Length; i++)
+                currentTerrainData.SetDetailLayer(0, 0, i, emptyMap);
+        }
 
+        #region Serialization
+         
         public void OnBeforeSerialize()
         {
+            return;
             if (IsDirty)
             {
                 if (!tilesOK)
                     return;
 
-                savedTiles = new List<Tile>();
-
-                foreach (var key in spawnTiles.cellDict.Keys)
-                {
-                    savedTiles.Add(new Tile(spawnTiles.cellDict[key]));
-                }
+                SaveDataToFile();
 
                 IsDirty = false;
                 IsSerialized = true;
             }
         }
-                     
+ 
         public void OnAfterDeserialize()
-        { 
+        {
             InitTiles();
-            if(savedTiles != null)
-            {
-                foreach (var item in savedTiles)
-                {
-                    if(item.kdTree.Points != null)
-                        spawnTiles.GetTileAtPos(item.worldPos).AddTileData(item.kdTree.Points);
-                }
-            }
-            savedTiles.Clear();
         }
-                 
+                  
         public void SaveDataToFile()
         {
             if(saveFile == null)
@@ -624,9 +717,8 @@ namespace MassiveDesinger
             }
 
             saveFile.Save(spawnTiles);
-
-        }
-
+        } 
+            
         public void ReloadDataFromFile()
         {
             if (saveFile == null)
@@ -635,7 +727,8 @@ namespace MassiveDesinger
                 return;
             }
 
-            saveFile.Load(ref spawnTiles);
+            UpdateLayersData();
+            saveFile.Load(ref spawnTiles, ref Externals.unityTerrain);
             tilesOK = spawnTiles.isOk;
             UnityEditor.EditorUtility.SetDirty(saveFile);
         }

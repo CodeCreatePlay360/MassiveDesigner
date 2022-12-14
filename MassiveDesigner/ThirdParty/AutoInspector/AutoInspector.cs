@@ -312,13 +312,16 @@ namespace CodeCreatePlay
                     }
                 }
 
+                // ** --------------------------------------------------------- **
+                // CUSTOM CODE SHOULD BE REMOVED FROM AUTO_INSPECTOR'S SOURCE CODE
+
                 else if (attr.CtrlType == ControlType.LocationCategory)
                 {
                     info = t.GetField(attr.Name);
                     if (info != null)
                     {
-                        LocationTool.LocationCategory ctrl = (LocationTool.LocationCategory)info.GetValue(obj);
-                        ctrl = (LocationTool.LocationCategory)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
+                        MassiveDesinger.LocationCategory ctrl = (MassiveDesinger.LocationCategory)info.GetValue(obj);
+                        ctrl = (MassiveDesinger.LocationCategory)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
                         info.SetValue(obj, ctrl);
                     }
                 }
@@ -345,24 +348,13 @@ namespace CodeCreatePlay
                     }
                 }
 
-                else if (attr.CtrlType == ControlType.AreaShape)
-                {
-                    info = t.GetField(attr.Name);
-                    if (info != null)
-                    {
-                        MassiveDesinger.Tools.AreaShape ctrl = (MassiveDesinger.Tools.AreaShape)info.GetValue(obj);
-                        ctrl = (MassiveDesinger.Tools.AreaShape)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
-                        info.SetValue(obj, ctrl);
-                    }
-                }
-
                 else if (attr.CtrlType == ControlType.PaintMode)
                 {
                     info = t.GetField(attr.Name);
                     if (info != null)
                     {
-                        MassiveDesinger.Tools.GrassPainter.PaintMode ctrl = (MassiveDesinger.Tools.GrassPainter.PaintMode)info.GetValue(obj);
-                        ctrl = (MassiveDesinger.Tools.GrassPainter.PaintMode)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
+                        MassiveDesinger.Tools_Pro.GrassPainter.PaintMode ctrl = (MassiveDesinger.Tools_Pro.GrassPainter.PaintMode)info.GetValue(obj);
+                        ctrl = (MassiveDesinger.Tools_Pro.GrassPainter.PaintMode)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
                         info.SetValue(obj, ctrl);
                     }
                 }
@@ -373,6 +365,8 @@ namespace CodeCreatePlay
         {
             public static float PREV_ICON_SIZE = 80;
             [System.NonSerialized] static Color textColor = new (1f, 0.8f, 0.4f, 1f);
+
+            [System.NonSerialized] public static Texture2D placeHolderIcon = null;
 
             [System.NonSerialized] static GUIStyle boldLabel_Style = null;
 
@@ -391,6 +385,16 @@ namespace CodeCreatePlay
                     }
 
                     return boldLabel_Style;
+                }
+            }
+
+            public static Texture PlaceholderIcon
+            {
+                get
+                {
+                    if (placeHolderIcon == null)
+                        placeHolderIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/ThirdParty/AutoInspector/Resources/image_placeholder.jpg", typeof(Texture2D)) as Texture2D;
+                    return placeHolderIcon;
                 }
             }
 
@@ -497,13 +501,14 @@ namespace CodeCreatePlay
             public static void DrawGameObjectList<T>(List<GameObject> gameObjects,
                 System.Action<GameObject> onAdd,
                 System.Action<int> onRemove,
-                System.Action<int, GameObject> onChangeDetect)
+                System.Action<int, GameObject> onChangeDetect,
+                bool allowSceneObjects = false)
             {
                 if (gameObjects.Count == 0)
                     onAdd(null);
 
-                GameObject previousGO = null;
-                Color oldColor = default;
+                GameObject previousGO;
+                Color oldColor;
 
                 for (int i = 0; i < gameObjects.Count; i++)
                 {
@@ -513,8 +518,7 @@ namespace CodeCreatePlay
                     previousGO = gameObjects[i];
 
                     // create an object field for this gameObject
-                    gameObjects[i] = (GameObject)EditorGUILayout.ObjectField(
-                    gameObjects[i], typeof(GameObject), false);
+                    gameObjects[i] = (GameObject)EditorGUILayout.ObjectField(gameObjects[i], typeof(GameObject), allowSceneObjects);
 
                     if (gameObjects[i] != null && gameObjects[i].GetComponent<T>() == null)
                     {
@@ -587,14 +591,14 @@ namespace CodeCreatePlay
                     }
 
                     // --------------------------------------------------------------
-                    // switch to selected button colour if this PaintMesh is selected.
+                    // switch to selected button colour if this object is selected.
                     oldColor = GUI.backgroundColor;
                     if (i == getSelectedItemIndex())
                     {
                         GUI.backgroundColor = Color.green;
                     }
 
-                    // create a button to select this PaintMesh.
+                    // create a button to select this object.
                     if (gameObjects[i] != null && GUILayout.Button("Select"))
                         onSelect(i);
 
@@ -695,9 +699,18 @@ namespace CodeCreatePlay
                             }
 
                             // Draw prefab preview
-                            GUI.Box(
-                                previewArea,
-                                new GUIContent(AssetPreview.GetAssetPreview(gameObjects[idx]), ""));
+                            if(!gameObjects[idx].GetComponent<MeshRenderer>())
+                            {
+                                GUI.Box(
+                                    previewArea,
+                                    new GUIContent(AutoInspector.PlaceholderIcon, ""));
+                            }
+                            else
+                            {
+                                GUI.Box(
+                                    previewArea,
+                                    new GUIContent(AssetPreview.GetAssetPreview(gameObjects[idx]), ""));
+                            }
 
                             // Draw the activation toggle
                             // bool selected = GUI.Toggle(new Rect(previewArea.xMin + 4, previewArea.yMin + 4, 20, 20), type.m_PaintInfo.m_PaintEnabled, GUIContent.none);
@@ -811,12 +824,13 @@ namespace CodeCreatePlay
             transformsList,
             gameObjectsList,
 
+            // ** --------------------------------------------------------- **
+            // CUSTOM CODE SHOULD BE REMOVED FROM AUTO_INSPECTOR'S SOURCE CODE
+
             LocationCategory, // LocationTool
-            ItemsType, // 
-            BrushPaintMode, // FoliagePainter
-            AreaShape, // ScatterTool
-            PaintMode, // GarassPainter
-            TileSize,  // SpawnTiles
+            ItemsType,        // MassiveDesigner Layer and PaintMesh 
+            BrushPaintMode,   // FoliagePainter
+            PaintMode,        // GarassPainter
         }
     }
 }

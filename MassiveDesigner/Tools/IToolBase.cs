@@ -3,12 +3,14 @@ namespace MassiveDesinger
 {
     namespace Tools
     {
-        [UnityEngine.SerializeField]
-        public abstract class ToolBase
+        [System.Serializable]
+        public class ToolBase
         {
-            public abstract void Initialize();
-            public abstract void Refresh();
-            public abstract bool IsOK();
+            public string toolName;
+            public virtual void Initialize() { }
+            public virtual void Refresh() { }
+            public virtual bool IsOK() { return true; }
+            public virtual void OnGizmos() { }
         }
     }
 }

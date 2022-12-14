@@ -1,6 +1,7 @@
-using UnityEngine;
-using UnityEditor;
 using MassiveDesinger;
+using MassiveDesinger.Tools;
+using UnityEditor;
+using UnityEngine;
 
 
 [CustomEditor(typeof(MassiveDesigner))]
@@ -15,22 +16,102 @@ public class MassiveDesignerEd : Editor
     public static GUIStyle boxStyle = null;
     public static GUIStyle horizontalLine;
 
+    public static MassiveDesignerEd Instance = null;
+
     // constants
     public readonly Color SELECTED_COLOR = Color.green;
     public readonly Color BTN_NORMAL_COLOR = Color.gray;
     public int CONTROL_HEIGHT = 18;
 
     // public fields
-    public MassiveDesigner worldEditor = null;
+    public MassiveDesigner massiveDesigner = null;
 
     // init default tools
-    public MassiveDesinger.Tools.FoliagePaintEd foliagePainter = new();
-    public MassiveDesinger.Tools.GrassPainterEd grassPainterEd = new();
-    public MassiveDesinger.Tools.AreaScatterToolEd scatterTool = new();
-    public MassiveDesinger.Tools.LocationToolEd locationToolEd = new();
+    public FoliagePaintEd foliagePainterEd = new("_FoliagePainter_");
+    public MassiveDesinger.Tools_Pro.GrassPaintEd grassPainterEd = new("_GrassPaintEd_");
+    public MassiveDesinger.Tools_Pro.LocationToolEd locationToolEd = new("_LocationToolEd_");
+
+    // ICONS
+    [System.NonSerialized] Texture paintBrushIcon;
+    [System.NonSerialized] Texture cancelIcon;
+    [System.NonSerialized] Texture refreshIcon;
+    [System.NonSerialized] Texture newIcon;
+    [System.NonSerialized] Texture copyIcon;
+    [System.NonSerialized] Texture pasteIcon;
+    [System.NonSerialized] Texture removeIcon;
+
+    public Texture PaintBrushIcon
+    {
+        get
+        {
+            if(paintBrushIcon == null)
+                paintBrushIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/paintBrush.png", typeof(Texture)) as Texture;
+            return paintBrushIcon;
+        }
+    }
+
+    public Texture CancelIcon
+    {
+        get
+        {
+            if (cancelIcon == null)
+                cancelIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/cancel.png", typeof(Texture)) as Texture;
+            return cancelIcon;
+        }
+    }
+
+    public Texture RefreshIcon
+    {
+        get
+        {
+            if (refreshIcon == null)
+                refreshIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/refresh.png", typeof(Texture)) as Texture;
+            return refreshIcon;
+        }
+    }
+
+    public Texture NewIcon
+    {
+        get
+        {
+            if (newIcon == null)
+                newIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/file.png", typeof(Texture)) as Texture;
+            return newIcon;
+        }
+    }
+
+    public Texture CopyIcon
+    {
+        get
+        {
+            if (copyIcon == null)
+                copyIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/copy.png", typeof(Texture)) as Texture;
+            return copyIcon;
+        }
+    }
+
+    public Texture PasteIcon
+    {
+        get
+        {
+            if (pasteIcon == null)
+                pasteIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/paste.png", typeof(Texture)) as Texture;
+            return pasteIcon;
+        }
+    }
+
+    public Texture RemoveIcon
+    {
+        get
+        {
+            if (removeIcon == null)
+                removeIcon = AssetDatabase.LoadAssetAtPath("Assets/MassiveDesigner/Resources/cancel.png", typeof(Texture)) as Texture;
+            return removeIcon;
+        }
+    }
 
     // private
-    [SerializeField] private int currentTabIndex = 0; // geo paint editor = 0, spline editor = 1
+    [SerializeField] private string[] sections = new string[] { "World", "LocationEditor", "Settings" };
     [SerializeField] private bool layerPrototypesFoldPanel = false;
     private SceneView sceneView = null;
 
@@ -47,22 +128,26 @@ public class MassiveDesignerEd : Editor
      
     public void OnEnable()
     {
-        worldEditor = target as MassiveDesigner;
+        massiveDesigner = target as MassiveDesigner;
+        Instance = this;
         SceneView.duringSceneGui += OnSceneGUI;
         EnableTools();
     }
 
-    public void OnDisable()
+    public void OnDisable() 
     {
         SceneView.duringSceneGui -= OnSceneGUI;
     }
 
     void EnableTools()
     {
-        foliagePainter.Initialize(worldEditor, sceneView);
-        // grassPainterEd.Initialize(worldEditor, sceneView);
-        // scatterTool.Initialize(worldEditor, sceneView);
-        locationToolEd.Initialize(worldEditor, sceneView);
+        // sometimes Instance can be null if for example this is called from OnSceneGUI
+        if (MassiveDesigner.Instance != null)
+        {
+            foliagePainterEd.Initialize(sceneView);
+            grassPainterEd.Initialize(sceneView);
+            locationToolEd.Initialize(sceneView);
+        }
     }
 
     public override void OnInspectorGUI()
@@ -81,7 +166,7 @@ public class MassiveDesignerEd : Editor
                 fontStyle = FontStyle.Bold,
                 fontSize = 15,
             };
-            mainHeadingStyle.normal.textColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            mainHeadingStyle.normal.textColor = new(1f, 0.8f, 0.4f, 1f);
 
             miniLabelStyle = new GUIStyle(EditorStyles.label)
             {
@@ -106,31 +191,30 @@ public class MassiveDesignerEd : Editor
         using (new GUILayout.HorizontalScope())
         {
             EditorGUILayout.LabelField("MassiveDesigner", mainHeadingStyle);
-            EditorGUILayout.LabelField("v0.1", miniLabelStyle);
+            EditorGUILayout.LabelField(MassiveDesigner.VERSION, miniLabelStyle);
         }
 
         if (EditorGUILayout.LinkButton("Visit Github for latest updates"))
-            Debug.Log("Link clicked");
+            System.Diagnostics.Process.Start("https://github.com/CodeCreatePlay360/MassiveDesigner");
 
         GUILayout.Space(2);
 
         using (new GUILayout.HorizontalScope())
         {
             if (EditorGUILayout.LinkButton("Support on patreon"))
-                Debug.Log("Manual");
+                System.Diagnostics.Process.Start("https://www.patreon.com/CodeCreatePlay360");
 
             if (EditorGUILayout.LinkButton("Discord"))
-                Debug.Log("Manual");
+                System.Diagnostics.Process.Start("https://discord.gg/EKmhB8xTq9");
         }
 
         GUILayout.Space(5);
-        currentTabIndex = GUILayout.SelectionGrid(currentTabIndex, new string[]
-        { "World", "LocationEditor", "Settings" }, 3, EditorStyles.toolbarButton);
+        massiveDesigner.currentTabIndex = GUILayout.SelectionGrid(massiveDesigner.currentTabIndex, sections, 3, EditorStyles.toolbarButton);
 
         GUILayout.Space(10);
-        if (currentTabIndex == 0) DrawTab_1_UI();
-        if (currentTabIndex == 1) DrawTab_2_UI();
-        if (currentTabIndex == 2) DrawTab_3_UI();
+        if (massiveDesigner.currentTabIndex == 0) DrawTab_1_UI();
+        if (massiveDesigner.currentTabIndex == 1) DrawTab_2_UI();
+        if (massiveDesigner.currentTabIndex == 2) DrawTab_3_UI();
 
         GUILayout.Space(20);
     }
@@ -157,7 +241,7 @@ public class MassiveDesignerEd : Editor
 
     void DrawTab_1_UI()
     {
-        if(!worldEditor.tilesOK)
+        if(!massiveDesigner.tilesOK)
         {
             EditorGUILayout.HelpBox("TilesInstance not initialized !", MessageType.Error);
             return;
@@ -171,15 +255,15 @@ public class MassiveDesignerEd : Editor
 
         DrawLayersInspector();
 
-        if (worldEditor.SelectedLayer != null)
+        if (massiveDesigner.SelectedLayer != null)
         {
             if (boxStyle == null)
                 CreateBox();
 
-            boxYPos = (110 + (worldEditor.Layers.Count * 20));
-            if (worldEditor.Layers.Count > 1)
-                boxYPos += worldEditor.Layers.Count;
-            GUI.Box(new Rect(0, boxYPos, 800, 120), "", boxStyle);
+            //boxYPos = (113 + (massiveDesigner.Layers.Count * 20));
+            //if (massiveDesigner.Layers.Count > 1)
+            //    boxYPos += massiveDesigner.Layers.Count;
+            //GUI.Box(new Rect(0, boxYPos, 800, 138), "", boxStyle);
              
             DrawLayerSettings();
 
@@ -187,7 +271,7 @@ public class MassiveDesignerEd : Editor
             DrawPrototypesInspector();
             DrawPrototypesThumbnails();
 
-            if(worldEditor.SelectedLayer.prototypes.Count > 1)
+            if(massiveDesigner.SelectedLayer.prototypes.Count > 1)
             {
                 GUILayout.Space(8F);
                 DrawPaintMeshesInspector();
@@ -198,13 +282,13 @@ public class MassiveDesignerEd : Editor
         GUILayout.Space(20);
 
         // update tool inspectors
-        foliagePainter.OnInspectorUpdate();
+        foliagePainterEd.OnInspectorUpdate();
         HorizontalLine(Color.grey);
         GUILayout.Space(4);
 
-        // grassPainterEd.OnInspectorUpdate();
-        // HorizontalLine(Color.grey);
-        // GUILayout.Space(4);
+        grassPainterEd.OnInspectorUpdate();
+        HorizontalLine(Color.grey);
+        GUILayout.Space(4);
 
         // scatterTool.OnInspectorUpdate();
         // HorizontalLine(Color.grey);
@@ -217,41 +301,39 @@ public class MassiveDesignerEd : Editor
     void DrawTab_2_UI()
     {
         locationToolEd.OnInspectorUpdate();
-        // grassPatchTool.OnInspectorUpdate();
     }
 
     void DrawTab_3_UI()
     {
-        worldEditor.spawnTiles.AutoInspector.Build();
+        massiveDesigner.spawnTiles.AutoInspector.Build();
         GUILayout.Space(10);
-        EditorGUILayout.HelpBox("GridSize is limited to 8km.", MessageType.Info);
+        EditorGUILayout.HelpBox("Minimum grid size is 1km.", MessageType.Info);
+        EditorGUILayout.HelpBox("Minimum tile size is 500m.", MessageType.Info);
 
         using (new GUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("InitializeSpawnTiles"))
-                worldEditor.InitTiles();
+            if (GUILayout.Button("Initialize Spawn Tiles"))
+                massiveDesigner.InitTiles();
         }
 
         GUILayout.Space(10);
         GUILayout.Space(10);
-        worldEditor.externals.AutoInspector.Build();
-        worldEditor.saveFile = (SaveDataFile)EditorGUILayout.ObjectField("SaveDataObj", worldEditor.saveFile, typeof(SaveDataFile), false);
+        massiveDesigner.externals.AutoInspector.Build();
+        massiveDesigner.saveFile = (SaveDataFile)EditorGUILayout.ObjectField("SaveDataObj", massiveDesigner.saveFile, typeof(SaveDataFile), false);
     }
-
-    public static string iconPrefix => EditorGUIUtility.isProSkin ? "d_" : "";
 
     void DrawLayersInspector()
     {
         // make sure at least one layer always exist
-        if(worldEditor.Layers.Count == 0)
-            worldEditor.AddLayer();
+        if(massiveDesigner.Layers.Count == 0)
+            massiveDesigner.AddLayer();
         // ------------------------------------------
 
-        for (int i = 0; i < worldEditor.Layers.Count; i++)
+        for (int i = 0; i < massiveDesigner.Layers.Count; i++)
         {
             GUILayout.BeginHorizontal();
 
-            var layer = worldEditor.Layers[i];
+            var layer = massiveDesigner.Layers[i];
             layer.layerIndex = i;
 
             // layer count
@@ -263,29 +345,19 @@ public class MassiveDesignerEd : Editor
             // a button to select this layer
             // change btn color tint according to layer's selected status.
             Color oldColor = GUI.backgroundColor;
-            if (worldEditor.SelectedLayerIdx == i)
+            if (massiveDesigner.SelectedLayerIdx == i)
             { GUI.backgroundColor = SELECTED_COLOR; }
 
             if (GUILayout.Button("Select", GUILayout.MinHeight(CONTROL_HEIGHT)))
-            { worldEditor.SelectLayer(i); }
+            { massiveDesigner.SelectLayer(i); }
             GUI.backgroundColor = oldColor;
 
             // a toggle field to toggle this layer on and off
             layer.active = EditorGUILayout.Toggle(layer.active, GUILayout.MaxHeight(20), GUILayout.MaxWidth(20));
 
             //
-            var copyIcon =  AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/copy.png", typeof(Texture)) as Texture;
-            var pasteIcon = AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/paste.png", typeof(Texture)) as Texture;
-            var removeIcon = AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/cancel.png", typeof(Texture)) as Texture;
-
-            if (GUILayout.Button(new GUIContent("", copyIcon, "Copy Layer Settings To Clipboard")))
-            { worldEditor.SelectedLayer.CopySettings(); }
-
-            if (GUILayout.Button(new GUIContent("", pasteIcon, "Paste Settings From Clipboard")))
-            { worldEditor.SelectedLayer.PasteSettings(); }
-
-            if (GUILayout.Button(new GUIContent("", removeIcon, "Remove Layer")))
-            { worldEditor.RemoveLayer(i); break; }
+            if (GUILayout.Button(new GUIContent("", RemoveIcon, "Remove Layer"), GUILayout.MaxWidth(40)))
+            { massiveDesigner.RemoveLayer(i); break; }
 
             // update paintmesh layerIndexes according to layer index
             for (int j = 0; j < layer.paintMeshes.Count; j++)
@@ -298,29 +370,36 @@ public class MassiveDesignerEd : Editor
 
     void DrawLayerSettings()
     {
-        PaintMesh.ItemType layerItemsType = worldEditor.SelectedLayer.settings.itemsType;
+        PaintMesh.ItemType layerItemsType = massiveDesigner.SelectedLayer.settings.itemsType;
 
-        worldEditor.SelectedLayer.layerSettingsAutoCntrls.Build();
+        massiveDesigner.SelectedLayer.layerSettingsAutoCntrls.Build();
 
-        if (layerItemsType != worldEditor.SelectedLayer.settings.itemsType)
+        if (layerItemsType != massiveDesigner.SelectedLayer.settings.itemsType)
         {
-            foreach (var paintMesh in worldEditor.SelectedLayer.paintMeshes)
+            foreach (var paintMesh in massiveDesigner.SelectedLayer.paintMeshes)
             {
                 if(paintMesh)
                 {
-                    paintMesh.properties.itemType = worldEditor.SelectedLayer.settings.itemsType;
+                    paintMesh.properties.itemType = massiveDesigner.SelectedLayer.settings.itemsType;
                 }
             }
-            Debug.LogFormat("Updated item type for layer {0}", worldEditor.SelectedLayer.layerName);
-            worldEditor.SelectedLayer.VerifyPaintMeshes();
-            MassiveDesigner.Externals.UpdateTerrainPrototypes(worldEditor.Layers);
+            // Debug.LogFormat("Updated item types for layer {0}", worldEditor.SelectedLayer.layerName);
+            massiveDesigner.SelectedLayer.VerifyPaintMeshes();
+            MassiveDesigner.Externals.UpdateTerrainPrototypes(massiveDesigner.Layers);
         }
 
         GUILayout.Space(10);
 
-        var newLayerIcon = AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/file.png", typeof(Texture)) as Texture;
-        if (GUILayout.Button(new GUIContent("  Create New Layer", newLayerIcon, "CreateNewLayer")))
-            worldEditor.AddLayer();
+        using (new GUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button(new GUIContent("  Copy Layer Settings", CopyIcon, "Copy Layer Settings")))
+                massiveDesigner.SelectedLayer.CopySettings();
+            if (GUILayout.Button(new GUIContent("  Paste Layer Settings", PasteIcon, "Paste Layer Settings")))
+                massiveDesigner.SelectedLayer.PasteSettings();
+        }
+
+        if (GUILayout.Button(new GUIContent("  Create New Layer", NewIcon, "CreateNewLayer")))
+            massiveDesigner.AddLayer();
     }
 
     void DrawPrototypesInspector()
@@ -330,27 +409,27 @@ public class MassiveDesignerEd : Editor
         if (layerPrototypesFoldPanel)
         {
             CodeCreatePlay.AutoInspector.AutoInspector.DrawGameObjectList<PaintMesh>(
-                worldEditor.SelectedLayer.prototypes,
-                worldEditor.SelectedLayer.OnAddPrototype,
-                worldEditor.SelectedLayer.OnRemovePrototype,
-                worldEditor.SelectedLayer.OnPrototypeChange);
+                massiveDesigner.SelectedLayer.prototypes,
+                massiveDesigner.SelectedLayer.OnAddPrototype,
+                massiveDesigner.SelectedLayer.OnRemovePrototype,
+                massiveDesigner.SelectedLayer.OnPrototypeChange);
         }
     }
 
     void DrawPrototypesThumbnails()
     {
-        CodeCreatePlay.AutoInspector.AutoInspector.DrawThumbnailsInspector(worldEditor.SelectedLayer.prototypes,
-            worldEditor.SelectedLayer.SelectPaintMesh,
-            worldEditor.SelectedLayer.GetSelectedPaintMeshIdx
+        CodeCreatePlay.AutoInspector.AutoInspector.DrawThumbnailsInspector(massiveDesigner.SelectedLayer.prototypes,
+            massiveDesigner.SelectedLayer.SelectPaintMesh,
+            massiveDesigner.SelectedLayer.GetSelectedPaintMeshIdx
             );
     }
 
     void DrawPaintMeshesInspector()
     {
-        if (worldEditor.SelectedLayer.SelectedPaintMesh != null &&
-            worldEditor.SelectedLayer.SelectedPaintMesh.autoInspector != null)
+        if (massiveDesigner.SelectedLayer.SelectedPaintMesh != null &&
+            massiveDesigner.SelectedLayer.SelectedPaintMesh.autoInspector != null)
         {
-            worldEditor.SelectedLayer.SelectedPaintMesh.autoInspector.Build();
+            massiveDesigner.SelectedLayer.SelectedPaintMesh.autoInspector.Build();
         }
     }
 
@@ -360,13 +439,13 @@ public class MassiveDesignerEd : Editor
         {
             if (GUILayout.Button("Save Data"))
             {
-                worldEditor.SaveDataToFile();
-                if (worldEditor.saveFile != null)
-                    EditorUtility.SetDirty(worldEditor.saveFile);
+                massiveDesigner.SaveDataToFile();
+                if (massiveDesigner.saveFile != null)
+                    EditorUtility.SetDirty(massiveDesigner.saveFile);
             }
 
             if (GUILayout.Button("Load Data From File"))
-                worldEditor.ReloadDataFromFile();
+                massiveDesigner.ReloadDataFromFile();
         }
 
         using (new GUILayout.HorizontalScope())
@@ -374,8 +453,8 @@ public class MassiveDesignerEd : Editor
             var refreshIcon = AssetDatabase.LoadAssetAtPath("Assets/MaidenLand/MassiveDesigner/Resources/refresh.png", typeof(Texture)) as Texture;
             if (GUILayout.Button(new GUIContent("  Refresh And Update", refreshIcon, "")))
             {
-                worldEditor.Enable();
-                MassiveDesigner.Externals.UpdateTerrainPrototypes(worldEditor.Layers);
+                massiveDesigner.Enable();
+                MassiveDesigner.Externals.UpdateTerrainPrototypes(massiveDesigner.Layers);
             }
         }
 
@@ -385,7 +464,7 @@ public class MassiveDesignerEd : Editor
             GUI.backgroundColor = new Color(1f, 0.2f, 0.2f, 1f);
              
             if (GUILayout.Button("Clear All Data"))
-                worldEditor.ClearAll();
+                massiveDesigner.ClearAll();
 
             GUI.backgroundColor = original;
         }
@@ -396,17 +475,14 @@ public class MassiveDesignerEd : Editor
         if (sceneView == null)
         {
             sceneView = sv;
-            foliagePainter.Initialize(worldEditor, sceneView);
-            // grassPainterEd.Initialize(worldEditor, sceneView);
-            // scatterTool.Initialize(worldEditor, sceneView);
+            EnableTools();
         }
 
         DebugGrid();
 
         // update tools
-        foliagePainter.OnSceneUpdate();
-        // grassPainterEd.OnSceneUpdate();
-        // scatterTool.OnSceneUpdate();
+        foliagePainterEd.OnSceneUpdate();
+        grassPainterEd.OnSceneUpdate();
         locationToolEd.OnSceneUpdate();
 
         sceneView.Repaint();
@@ -414,13 +490,13 @@ public class MassiveDesignerEd : Editor
       
     void DebugGrid()
     {
-        if (worldEditor.tilesOK && worldEditor.spawnTiles.drawTiles)
+        if (massiveDesigner.tilesOK && massiveDesigner.spawnTiles.drawTiles)
         {
             Handles.color = Color.white;
-            foreach (var cellEntry in worldEditor.spawnTiles.cellDict.Keys)
+            foreach (var cellEntry in massiveDesigner.spawnTiles.cellDict.Keys)
             {
-                Handles.DrawWireCube(worldEditor.spawnTiles.cellDict[cellEntry].worldPos,
-                    new Vector3(worldEditor.spawnTiles.tileSize, 0.05f, worldEditor.spawnTiles.tileSize));
+                Handles.DrawWireCube(massiveDesigner.spawnTiles.cellDict[cellEntry].worldPos,
+                    new Vector3(massiveDesigner.spawnTiles.tileSize, 0.05f, massiveDesigner.spawnTiles.tileSize));
             }
 
             //Handles.color = Color.white;

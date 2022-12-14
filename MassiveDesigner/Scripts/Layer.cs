@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using CodeCreatePlay.AutoInspector;
-using CodeCreatePlay.Utils;
 
 
 namespace MassiveDesinger
@@ -21,6 +20,9 @@ namespace MassiveDesinger
 
             [EditorFieldAttr(ControlType.layerField, "layerMask")]
             public LayerMask layerMask = default; // the layer to paint on
+             
+            [FloatSliderAttr(ControlType.floatSlider, "sparse", 1, 5)]
+            public float sparse = 1;
 
             [EditorFieldAttr(ControlType.textControl, "splatLayers")]
             public string splatLayers = "-1"; // indexes into terrain splat layers
@@ -122,6 +124,8 @@ namespace MassiveDesinger
 
         public void OnRemovePrototype(int idx)
         {
+            MassiveDesigner.Instance.RemoveAllItems(onLayer: false, layerIdx: -1, paintMesh: paintMeshes[idx]);
+
             prototypes.RemoveAt(idx);
             paintMeshes.RemoveAt(idx);
 
@@ -187,18 +191,19 @@ namespace MassiveDesinger
         /// updates paint meshes in this layer, this method should be called only once
         /// before any spawn operation.
         /// </summary>
-        public void UpdatePaintMeshes()
+        public void UpdatePaintMeshes(int layerPriorityIdx)
         {
             for (int i = 0; i < paintMeshes.Count; i++)
             {
                 if (paintMeshes[i] != null)
                 {
                     paintMeshes[i].properties.itemType = settings.itemsType;
+                    paintMeshes[i].layerPriorityIdx = layerPriorityIdx;
                     UnityEditor.EditorUtility.SetDirty(paintMeshes[i]);
                 }
             }
         }
-
+          
         /// <summary>
         /// sorts paintmeshes according to specie name, this method should be called only once
         /// before any spawn operation.
@@ -218,6 +223,16 @@ namespace MassiveDesinger
                     sortedPaintMeshes[item.properties.specieName].Add(item);
                 }
             }
+        }
+
+        public bool HasGameObject(GameObject go)
+        {
+            foreach (var item in paintMeshes)
+            {
+                if (item != null && item.gameObject == go)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -282,20 +297,20 @@ namespace MassiveDesinger
 
         public void CopySettings()
         {
-            MassiveDesigner.layerCopiedSettings = settings;
+            MassiveDesigner.Instance.layerCopiedSettings = settings;
             Debug.LogFormat("[MassiveDesigner] Copied layer {0} settings", layerName);
         }
 
         public void PasteSettings()
         {
-            if (MassiveDesigner.layerCopiedSettings != null)
+            if (MassiveDesigner.Instance.layerCopiedSettings != null)
             {
-                Settings settings = new Settings(MassiveDesigner.layerCopiedSettings);
+                Settings settings = new Settings(MassiveDesigner.Instance.layerCopiedSettings);
                 this.settings = settings;
                 LoadAutoControls();
             }
 
-            MassiveDesigner.layerCopiedSettings = null;
+            MassiveDesigner.Instance.layerCopiedSettings = null;
         }
     }
 }

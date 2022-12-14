@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace CodeCreatePlay
+namespace MassiveDesinger
 {
     namespace Utils
     {
