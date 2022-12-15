@@ -95,7 +95,7 @@ All collision related settings are defined under **PaintMesh > CollisionSettings
 **Debugging a PaintMesh**  
   At most you would want to visualize colliders of a **PaintMesh** for debugging purpose, to debug import any GameObject with **PaintMesh** component into scene and toggle on Debug under **PaintMesh** debug settings.
 
-https://user-images.githubusercontent.com/104358085/207707235-dbd40371-e93c-4fbf-be91-1c0c7d637724.mp4
+https://user-images.githubusercontent.com/104358085/207950766-d70555ea-5ef5-49b5-bb43-7d40e49eb8f9.mp4
 
 ## FoliagePainter
 
@@ -129,6 +129,8 @@ To begin painting a valid unity terrain should exist in scene with a **SpawnTile
 ### 1. __Serialization
 **MassiveDesigner** does not automatically serializes data, when entering play mode or during editor reload, data will be lost, so you will have to manually save and reload data and for that you will have to create a new MD save file script-able object **Create > MassiveDesigner > SaveData** and hook this into **Settings > SaveDataObj**, after that go to **World > Save Data/Reload Data From File** to actually save and reload data.  
 You can have multiple variations of **SaveData** files to have multiple variations of world design in same level.
+
+https://user-images.githubusercontent.com/104358085/207950593-a47eb39e-42fe-49c9-975c-555eee15f2e6.mp4
 
 # Location_Tool
 
