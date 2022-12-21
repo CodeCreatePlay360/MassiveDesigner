@@ -106,6 +106,8 @@ To begin painting a valid unity terrain should exist in scene with a **SpawnTile
 * control + right click drag to start painting
 * shift + right click drag to remove paint
 
+https://user-images.githubusercontent.com/104358085/208910282-fb1e817d-a13a-4bb6-b759-b5d8c3d35997.mp4
+
 **Setting**
 
 | Setting | Description |
