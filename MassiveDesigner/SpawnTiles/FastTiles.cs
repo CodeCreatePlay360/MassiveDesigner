@@ -22,6 +22,7 @@ namespace MassiveDesinger
                
             private bool isDirty = false;
             private bool hasKdTree = false;
+            public bool isOpen = false;
 
 
             // four corners of this cell
@@ -200,6 +201,12 @@ namespace MassiveDesinger
             [EditorFieldAttr(ControlType.intField, "tileSize")]
             public int tileSize = 500;
 
+            [EditorFieldAttr(ControlType.intField, "minGridSize")]
+            public int minGridSize = 500;
+
+            [EditorFieldAttr(ControlType.intField, "minTileSize")]
+            public int minTileSize = 1000;
+
             [EditorFieldAttr(ControlType.space, "space")]
             [System.NonSerialized] public int space = 5;
 
@@ -247,8 +254,8 @@ namespace MassiveDesinger
                     return;
                 }
 
-                int gridSize_ = Mathf.Clamp(gridSize, 1000, 8000);
-                int tileSize_ = Mathf.Clamp(tileSize, 500, 1000);
+                int gridSize_ = Mathf.Clamp(gridSize, minGridSize, 8000);
+                int tileSize_ = Mathf.Clamp(tileSize, minTileSize, 1000);
                 gridSize = gridSize_;
                 tileSize = tileSize_;
 
@@ -285,7 +292,7 @@ namespace MassiveDesinger
                 kdTree.Build(tileData, 32);
                 isOk = true;
 
-                Debug.LogFormat("[FastTiles] Cretaed {0} tiles", tileCount);
+                Debug.LogFormat("[FastTiles] Created {0} tiles", tileCount);
             }
 
             public void Clear()
@@ -309,6 +316,12 @@ namespace MassiveDesinger
                 {
                     return cellDict[worldPos];
                 }
+            }
+
+            public Tile GetRandomTile()
+            {
+                Vector3 randPos = new Vector3(Random.Range(0, gridSize), 0, Random.Range(0, gridSize));
+                return GetTileAtPos(randPos);
             }
 
             public Vector3 GetTilePos(Vector3 pos)

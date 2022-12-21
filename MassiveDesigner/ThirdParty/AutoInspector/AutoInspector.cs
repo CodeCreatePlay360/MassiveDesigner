@@ -320,8 +320,8 @@ namespace CodeCreatePlay
                     info = t.GetField(attr.Name);
                     if (info != null)
                     {
-                        MassiveDesinger.LocationCategory ctrl = (MassiveDesinger.LocationCategory)info.GetValue(obj);
-                        ctrl = (MassiveDesinger.LocationCategory)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
+                        MassiveDesinger.LocationTool.LocationCategory ctrl = (MassiveDesinger.LocationTool.LocationCategory)info.GetValue(obj);
+                        ctrl = (MassiveDesinger.LocationTool.LocationCategory)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
                         info.SetValue(obj, ctrl);
                     }
                 }
@@ -353,8 +353,8 @@ namespace CodeCreatePlay
                     info = t.GetField(attr.Name);
                     if (info != null)
                     {
-                        MassiveDesinger.Tools_Pro.GrassPainter.PaintMode ctrl = (MassiveDesinger.Tools_Pro.GrassPainter.PaintMode)info.GetValue(obj);
-                        ctrl = (MassiveDesinger.Tools_Pro.GrassPainter.PaintMode)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
+                        MassiveDesinger.Tools.GrassPainter.PaintMode ctrl = (MassiveDesinger.Tools.GrassPainter.PaintMode)info.GetValue(obj);
+                        ctrl = (MassiveDesinger.Tools.GrassPainter.PaintMode)EditorGUILayout.EnumPopup(char.ToUpper(attr.Name[0]) + attr.Name[1..], ctrl);
                         info.SetValue(obj, ctrl);
                     }
                 }
@@ -686,7 +686,7 @@ namespace CodeCreatePlay
                                 {
                                     onSelect(idx);
                                     // selectionIndex = idx;
-                                    // Repaint();
+                                    // SceneView.RepaintAll();
                                 }
                             }
                             // Debug.LogFormat("idx {0} sel {1}", idx, getSelectedItemIndex());

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using MassiveDesinger.Geometry;
-using System.Linq;
 
 
 namespace MassiveDesinger
@@ -243,9 +242,6 @@ namespace MassiveDesinger
 
         public static Vector3 GetUniformInTriangle(Vector3[] polygon, float scale)
         {
-            var a = polygon[1] - polygon[0];
-            var b = polygon[2] - polygon[0];
-
             var u1 = Random.Range(0f, 1f);
             var u2 = Random.Range(0f, 1f);
 
@@ -255,6 +251,9 @@ namespace MassiveDesinger
                 u1 = 1 - u1;
                 u2 = 1 - u2;
             }
+
+            var a = polygon[1] - polygon[0];
+            var b = polygon[2] - polygon[0];
 
             return u1 * (a * scale) + u2 * (b * scale);
         }
@@ -300,11 +299,6 @@ namespace MassiveDesinger
             GetAllTriangles(polygon, ref triangles);
             return GetRandUniformInPolygon(triangles);
         }
-
-        //public static List<Vector3> UniformInLocation(Tools_Pro.Location location)
-        //{
-        //    return location.locationBase.GetUniformPointsDistribution();
-        //}
 
         static List<Triangle> GetAllTriangles(GameObject polygon, ref List<Triangle> triangles)
         {

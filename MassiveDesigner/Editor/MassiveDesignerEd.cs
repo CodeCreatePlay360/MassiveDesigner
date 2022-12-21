@@ -28,8 +28,8 @@ public class MassiveDesignerEd : Editor
 
     // init default tools
     public FoliagePaintEd foliagePainterEd = new("_FoliagePainter_");
-    public MassiveDesinger.Tools_Pro.GrassPaintEd grassPainterEd = new("_GrassPaintEd_");
-    public MassiveDesinger.Tools_Pro.LocationToolEd locationToolEd = new("_LocationToolEd_");
+    public MassiveDesinger.LocationTool.GrassPaintEd grassPainterEd = new("_GrassPaintEd_");
+    public MassiveDesinger.LocationTool.LocationToolEd locationToolEd = new("_LocationToolEd_");
 
     // ICONS
     [System.NonSerialized] Texture paintBrushIcon;

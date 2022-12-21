@@ -9,12 +9,16 @@ namespace MassiveDesinger
     {
         public static class CommonMaths
         {
-            // Clamp list indices
-            // Will even work if index is larger/smaller than listSize, so can loop multiple times
+            /// <summary>
+            /// Clamp list indices
+            /// Will even work if index is larger/smaller than listSize, so can loop multiple times
+            /// </summary>
+            /// <param name="index"></param>
+            /// <param name="listSize"></param>
+            /// <returns></returns>
             public static int ClampListIndex(int index, int listSize)
             {
                 index = ((index % listSize) + listSize) % listSize;
-
                 return index;
             }
 
@@ -93,6 +97,14 @@ namespace MassiveDesinger
                     float newValue = (((value - oldMin) * newRange) / oldRange) + newMin;
                     return newValue;
                 }
+            }
+
+            public static Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal, float yAngleInDegrees)
+            {
+                if (!angleIsGlobal)
+                    angleInDegrees += yAngleInDegrees;
+
+                return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
             }
         }
 
@@ -574,7 +586,7 @@ namespace MassiveDesinger
         }
     }
 
-    public static class Geo2dUtils
+    public static class Geometry_2d
     {
         public static int Orientation(Vector2 p1, Vector2 p2, Vector2 p3)
         {

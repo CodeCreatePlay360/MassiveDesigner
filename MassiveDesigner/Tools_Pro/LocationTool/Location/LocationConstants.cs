@@ -2,6 +2,8 @@
 
 namespace MassiveDesinger
 {
+    namespace LocationTool
+    {
         [System.Serializable]
         public enum LocationCategory
         {
@@ -26,4 +28,5 @@ namespace MassiveDesinger
             LampPost,
             Torch,
         }
+    }
 }

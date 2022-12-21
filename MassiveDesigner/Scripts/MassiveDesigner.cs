@@ -203,8 +203,8 @@ namespace MassiveDesinger
         // tools
         public Externals externals = new();
         public Tools.FoliagePainter foliagePainter = new();
-        public Tools_Pro.GrassPainter grassPainter = new();
-        public Tools_Pro.LocationTool locationTool = new();
+        public Tools.GrassPainter grassPainter = new();
+        public LocationTool.LocationTool locationTool = new();
 
         // 
         public SaveDataFile saveFile = null;
@@ -316,6 +316,7 @@ namespace MassiveDesinger
         public void OnDrawGizmos()
         {
             foliagePainter.OnGizmos();
+            locationTool.OnGizmos();
         }
 
         public void Enable()
@@ -569,45 +570,6 @@ namespace MassiveDesinger
 
             if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
                 return true;
-
-            return false;
-        }
-
-        public bool _Collision(PaintMesh paintMesh, Vector3 scale, Vector3 atPos, TileDataObj tileData)
-        {
-            //if (paintMesh.properties.itemType == PaintMesh.ItemType.Trees && tileData.data.paintMesh.properties.itemType == PaintMesh.ItemType.Trees)
-            //{
-            //    // first collider radius and position
-            //    r1 = (scale.magnitude * paintMesh.properties.TreeColliderRadius);
-            //    //
-            //    if (paintMesh.properties.useFirstColliderOnly)
-            //        pos_1 = atPos;
-            //    else
-            //        pos_1 = atPos + paintMesh.properties.secondColliderOffset;
-
-            //    // second collider radius and position
-            //    r2 = (tileData.data.scale.magnitude * tileData.data.paintMesh.properties.TreeColliderRadius);
-            //    //
-            //    if (paintMesh.properties.useFirstColliderOnly)
-            //        pos_2 = tileData.pos;
-            //    else
-            //        pos_2 = tileData.data.pos + tileData.data.paintMesh.properties.secondColliderOffset;
-
-            //    if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
-            //        return true;
-            //}   
-            //else
-            //{
-            //    // all other meshes use first colliders 
-            //    r1 = paintMesh.properties.firstColliderRadius * scale.magnitude;
-            //    pos_1 = atPos + paintMesh.properties.firstColliderOffset;
-
-            //    r2 = tileData.data.paintMesh.properties.firstColliderRadius * tileData.data.scale.magnitude;
-            //    pos_2 = tileData.data.paintMesh.properties.firstColliderOffset;
-
-            //    if (CommonMaths.SphereCollision(pos_1, r1, pos_2, r2))
-            //        return true;
-            //}
 
             return false;
         }

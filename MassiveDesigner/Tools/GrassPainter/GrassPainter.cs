@@ -6,7 +6,7 @@ using MassiveDesinger.Tools;
 
 namespace MassiveDesinger
 {
-    namespace Tools_Pro
+    namespace Tools
     {
         [System.Serializable]
         public class GrassPainter : ToolBase

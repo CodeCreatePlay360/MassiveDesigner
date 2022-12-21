@@ -4,7 +4,7 @@ using MassiveDesinger.Tools;
 
 namespace MassiveDesinger
 {
-    namespace Tools_Pro
+    namespace LocationTool
     {
         [System.Serializable]
         public class LocationToolEd : EdToolBase
