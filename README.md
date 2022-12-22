@@ -12,6 +12,10 @@ There is discord sever if you want to meet other developers using MassiveDesigne
 
 > _For any suggestion, feedback or feature request email at CodeCreatePlay360@gmail.com_
 
+## Important Links
+* [Discord](https://discord.gg/ZbYRKtN6pg)
+* [Patreon](https://www.patreon.com/CodeCreatePlay360)
+
 ## Installation
 Download this repository and put it under Assets directory in your project or you can install from one of the packages.
 
@@ -167,5 +171,5 @@ https://user-images.githubusercontent.com/104358085/209187913-e725b5bc-877e-415b
 6. FoliagePainter will generalized to spawn PaintMeshes as GameObjects as well and probably be renamed to **Painter**.
 
 ## Support
-* [Discord](--)
+* [Discord](https://discord.gg/ZbYRKtN6pg)
 * CodeCreatePlay360@gmail.com
