@@ -136,17 +136,20 @@ https://user-images.githubusercontent.com/104358085/207950593-a47eb39e-42fe-49c9
 
 # Location_Tool
 
-![Image](Images/06.png)
+Location tool is designed to create and define locations in game world, to be used by AI characters during decision making and navigation stage.  
+This tool also offers some additional features, such as tools to clean up isolated areas in NavMesh and a tool to create a navigation graph out of NavMesh for AI characters.
 
-The purpose of this tool is to define locations in game world to be used by AI characters during navigation and decision making stage.  
-Game objects which otherwise are nothing but static meshes can have meaning associated to them and have boundaries and special destinations assigned.  
+![Image](Images/07.png)
+The LocationEditor can convert any game object to a Location, after an object is converted to a Location, its boundaries, important destinations in that Location along with several other properties can be defined.  
+To convert an existing game object to Location, go to menu bar **CodeCreatePlay > ConvertToLocation**.  
+1. To create boundaries **control + left mouse button**.
+2. And to create destination **control + right mouse button**.
 
-An example would during rain the AI characters can search for nearest locations of type **Rain Shelter**, this could be their home or anything and move there.
+![Image](Images/08.png)
+The NavigationGraph tool create a graph by connecting midpoints of every triangle in NavMesh, this navigation graph can be used for various purposes for example for AI character finding objects on a NavMesh.
 
-All locations are stored globally in an **LT_Globals** static class and provide methods to access locations based on various parameters such as nearest location of type, location by name etc.
-
-Besides this location tool provides some enhanced navigation features build on top of Unity's navmesh.  
-For a complete step by step on usage on this tool visit the tutorial section.
+ 
+>  _As of version 0.1 of MassiveDesigner, LocationTool is a programmer only tool and requires a fair bit of programming expertise to use, for an in depth on how to use use this tool for AI characters navigation visit the CodeCreatePlay patreon page._
 
 ****
 ## Known issues
