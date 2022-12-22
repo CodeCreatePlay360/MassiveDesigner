@@ -145,9 +145,12 @@ To convert an existing game object to Location, go to menu bar **CodeCreatePlay 
 1. To create boundaries **control + left mouse button**.
 2. And to create destination **control + right mouse button**.
 
+https://user-images.githubusercontent.com/104358085/209187973-b320c6cd-99f3-4d07-ad56-ad678c19c0c5.mp4
+
 ![Image](Images/08.png)
 The NavigationGraph tool create a graph by connecting midpoints of every triangle in NavMesh, this navigation graph can be used for various purposes for example for AI character finding objects on a NavMesh.
 
+https://user-images.githubusercontent.com/104358085/209187913-e725b5bc-877e-415b-9ae6-672952c11792.mp4
  
 >  _As of version 0.1 of MassiveDesigner, LocationTool is a programmer only tool and requires a fair bit of programming expertise to use, for an in depth on how to use use this tool for AI characters navigation visit the CodeCreatePlay patreon page._
 
