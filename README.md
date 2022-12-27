@@ -2,7 +2,7 @@
 
 MassiveDesigner is a level design and AI characters authoring tool for Unity engine.  
 
-Some of these tools are completely free and opensource and you can kick start your level design and modify them to your liking however for bigger projects there are advanced tools available through a patreon subscription, the patreon page contains some other goodies such as level design and AI programming tutorials, visit the patreon page here.
+Some of these tools are completely free and opensource and you can kick start your level design and modify them to your liking however for bigger projects there are advanced tools available through a patreon subscription, the patreon page contains some other goodies such as level design and AI programming tutorials, visit the patreon page [Link](https://www.patreon.com/CodeCreatePlay360 "Patreon").
 
 This repository contains instructions for installing MassiveDesigner as well as documentation for all tools and settings.  
 
@@ -146,6 +146,8 @@ To convert an existing game object to Location, go to menu bar **CodeCreatePlay 
 1. To create boundaries, select the location and **control + left mouse button**.
 2. And to create destination, select the location, **control + right mouse button**.
 
+https://user-images.githubusercontent.com/104358085/209680054-557a6c5d-50eb-4149-aea6-471a43f0e35b.mp4
+
 All location are stored in "LT_Globals" static class and can be accessed via its instance, 
 
 ```
@@ -178,11 +180,13 @@ Individual navigation nodes can be accessed through "NavigationGraph" static cla
 ![Image](Images/07.png)
 
 ## Demonstration
-There is few demonstrations of this tool, included in demo folder.  
+There is few demos of this tool, included in demo folder.  
 1. **Demo 1 Fireplace**, contains a simple fireplace location around which characters can sit, the fireplace consumes two elements gasoline and firewood to keep burning, as either one of the element is completely consumed, a character will have to search the map for missing element.  
 The two important scripts are "AI_Manager.cs" and "AI_Character.cs".
     * "AI_Manager" has a reference to fireplace location and tasks a random AI character to look for the missing element.
     * The "AI_Character" class represents a humanoid character, with four states, represented as enumeration, the actual states are implemented in their respective methods inside the "AI_Character" class.  
+
+https://user-images.githubusercontent.com/104358085/209680171-5315057c-5c84-4e74-8dee-6fcbc2446858.mp4
 
 ## Known Issues
 Sometimes the location editor losses reference to the active location even if you select it in the inspector, causing a null reference exception error, this can simply be fixed by re-initializing the location.
