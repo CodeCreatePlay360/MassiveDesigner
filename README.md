@@ -140,7 +140,7 @@ Location tool is designed to create and define locations or destinations in game
 This tool also offers some additional features, such as tools to clean up isolated areas in a NavMesh and a tool to create a navigation graph out of NavMesh for AI characters.
 
 ## Location Editor
-![Image](Images/07.png)
+![Image](Images/05.png)
 The LocationEditor can convert any game object to a Location, after an object is converted to a Location, its boundaries, important destinations in that Location along with several other properties can be defined.  
 To convert an existing game object to Location, go to menu bar **CodeCreatePlay > ConvertToLocation**.  
 1. To create boundaries, select the location and **control + left mouse button**.
@@ -165,7 +165,7 @@ Similarly to get a reference to individual destinations in a location,
 ```
 
 ## Navigation Graph
-![Image](Images/08.png)
+![Image](Images/06.png)
 The NavigationGraph tool create a graph by connecting midpoints (nodes) of every triangle in NavMesh, this navigation graph can be used for various purposes for example AI character finding objects on a NavMesh.  
 Individual nodes can be put into AI character's memory so it doesn't visit same area twice. 
 Individual navigation nodes can be accessed through "NavigationGraph" static class,
@@ -174,6 +174,8 @@ Individual navigation nodes can be accessed through "NavigationGraph" static cla
             Vector3 p1 = EnhancedNavigation.Instance.GetClosestNodePos(transform.position); // closest node position
             Vector3 p2 = EnhancedNavigation.Instance.GetRandomNodePos(); // random node position
 ```
+
+![Image](Images/07.png)
 
 ## Demonstration
 There is few demonstrations of this tool, included in demo folder.  
@@ -197,5 +199,5 @@ Sometimes the location editor losses reference to the active location even if yo
 6. FoliagePainter will generalized to spawn PaintMeshes as GameObjects as well and probably be renamed to **Painter**.
 
 ## Support
-* [Discord](--)
+* [Discord](https://discord.gg/ZbYRKtN6pg "discord")
 * CodeCreatePlay360@gmail.com
