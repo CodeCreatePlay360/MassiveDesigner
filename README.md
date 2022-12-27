@@ -2,7 +2,7 @@
 
 MassiveDesigner is a level design and AI characters authoring tool for Unity engine.  
 
-Some of these tools are completely free and opensource and you can kick start your level design and modify them to your liking however for bigger projects there are advanced tools available through a patreon subscription, the patreon page contains some other goodies such as level design and AI programming tutorials, visit the patreon page [Link](https://www.patreon.com/CodeCreatePlay360 "Patreon").
+Some of these tools are completely free and opensource and you can kick start your level design and modify them to your liking however for bigger projects there are advanced tools available through a patreon subscription, the patreon page contains some other goodies such as level design and AI programming tutorials.
 
 This repository contains instructions for installing MassiveDesigner as well as documentation for all tools and settings.  
 
@@ -11,6 +11,10 @@ There is discord sever if you want to meet other developers using MassiveDesigne
 >  _In MassiveDesigner almost all GUI elements have an associated tool-tip detailing its usage, to see a tool-tip, hover mouse cursor over any button or GUI element to see what it does._
 
 > _For any suggestion, feedback or feature request email at CodeCreatePlay360@gmail.com_
+
+## Important links
+1. [Discord](https://discord.gg/ZbYRKtN6pg "discord")
+2. [Patreon](https://www.patreon.com/posts/welcome-57582973?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Installation
 Download this repository and put it under Assets directory in your project or you can install from one of the packages.
