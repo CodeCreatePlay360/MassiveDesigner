@@ -136,23 +136,56 @@ https://user-images.githubusercontent.com/104358085/207950593-a47eb39e-42fe-49c9
 
 # Location_Tool
 
-Location tool is designed to create and define locations in game world, to be used by AI characters during decision making and navigation stage.  
-This tool also offers some additional features, such as tools to clean up isolated areas in NavMesh and a tool to create a navigation graph out of NavMesh for AI characters.
+Location tool is designed to create and define locations or destinations in game world, to be used by AI characters during decision making and navigation stage.  
+This tool also offers some additional features, such as tools to clean up isolated areas in a NavMesh and a tool to create a navigation graph out of NavMesh for AI characters.
 
+## Location Editor
 ![Image](Images/07.png)
 The LocationEditor can convert any game object to a Location, after an object is converted to a Location, its boundaries, important destinations in that Location along with several other properties can be defined.  
 To convert an existing game object to Location, go to menu bar **CodeCreatePlay > ConvertToLocation**.  
-1. To create boundaries **control + left mouse button**.
-2. And to create destination **control + right mouse button**.
+1. To create boundaries, select the location and **control + left mouse button**.
+2. And to create destination, select the location, **control + right mouse button**.
 
+All location are stored in "LT_Globals" static class and can be accessed via its instance, 
+
+```
+            // all location can be accessed via LT_Globals instance
+            LocationBase loc1 = LT_Globals.Instance.GetNearestLocation(transform.position, LocationCategory.Area);
+            LocationBase loc3 = LT_Globals.Instance.GetRandomLocation(LocationCategory.Area);
+```
+
+Similarly to get a reference to individual destinations in a location,
+
+```
+            // getting references to destinations inside a location
+            LocationBase location = LT_Globals.Instance.GetLocation("Fireplace");
+            Destination d1 = location.GetRandomDestination();
+            Destination d2 = location.GetDestinationByName("Some name");
+            Destination d3 = location.GetNextDestination(); // get next unoccupied location, returns null if all are occupied
+```
+
+## Navigation Graph
 ![Image](Images/08.png)
-The NavigationGraph tool create a graph by connecting midpoints of every triangle in NavMesh, this navigation graph can be used for various purposes for example for AI character finding objects on a NavMesh.
+The NavigationGraph tool create a graph by connecting midpoints (nodes) of every triangle in NavMesh, this navigation graph can be used for various purposes for example AI character finding objects on a NavMesh.  
+Individual nodes can be put into AI character's memory so it doesn't visit same area twice. 
+Individual navigation nodes can be accessed through "NavigationGraph" static class,
 
- 
->  _As of version 0.1 of MassiveDesigner, LocationTool is a programmer only tool and requires a fair bit of programming expertise to use, for an in depth on how to use use this tool for AI characters navigation visit the CodeCreatePlay patreon page._
+```
+            Vector3 p1 = EnhancedNavigation.Instance.GetClosestNodePos(transform.position); // closest node position
+            Vector3 p2 = EnhancedNavigation.Instance.GetRandomNodePos(); // random node position
+```
+
+## Demonstration
+There is few demonstrations of this tool, included in demo folder.  
+1. **Demo 1 Fireplace**, contains a simple fireplace location around which characters can sit, the fireplace consumes two elements gasoline and firewood to keep burning, as either one of the element is completely consumed, a character will have to search the map for missing element.  
+The two important scripts are "AI_Manager.cs" and "AI_Character.cs".
+    * "AI_Manager" has a reference to fireplace location and tasks a random AI character to look for the missing element.
+    * The "AI_Character" class represents a humanoid character, with four states, represented as enumeration, the actual states are implemented in their respective methods inside the "AI_Character" class.  
+
+## Known Issues
+Sometimes the location editor losses reference to the active location even if you select it in the inspector, causing a null reference exception error, this can simply be fixed by re-initializing the location.
 
 ****
-## Known issues
 
 ## Roadmap
 **For version 1.0**
